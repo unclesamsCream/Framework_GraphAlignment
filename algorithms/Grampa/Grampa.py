@@ -97,16 +97,13 @@ def decompose_Tlaplacian(A,rA):
     #return [D, V]
 
 def decompose_laplacian(A):
+    d = A.sum(axis=1)
+    D = np.diag(d)
+    L = D - A
+    D12 = np.diag(pow(d, -0.5))
 
-    #  adjacency matrix
+    L = D12 @ L @ D12
 
-    Deg = np.diag((np.sum(A, axis=1)))
-
-    n = np.shape(Deg)[0]
-
-    Deg = sci.linalg.fractional_matrix_power(Deg, -0.5)
-
-    L = np.identity(n) - Deg @ A @ Deg
     #P=np.linalg.inv(Deg)@ A@np.linalg.inv(Deg)
     #L=np.identity(n) - P
     #L= A+Deg
@@ -127,14 +124,19 @@ def seigh(A):
   l = l[idx]
   u = u[:,idx]
   return l, u
-def main(data, eta,lalpha):
+
+def main(data, eta,lalpha, lap):
   Src = data['Src']
   Tar = data['Tar']
   n = Src.shape[0]
-  #l,U =eigh(Src)
-  #mu,V = eigh(Tar)
-  l, U = decompose_laplacian(Src)
-  mu, V = decompose_laplacian(Tar)
+  
+  if lap:
+      l, U = decompose_laplacian(Src)
+      mu, V = decompose_laplacian(Tar)
+  else:
+      l,U =eigh(Src)
+      mu,V = eigh(Tar)
+  
   #l, U = decompose_Tlaplacian(Src,1.5)
   #mu, V = decompose_Tlaplacian(Tar,1.5)
   l = np.array([l])
@@ -145,10 +147,10 @@ def main(data, eta,lalpha):
 
   alpha=0
   dtype = np.float32
-  L = create_L(Src, Tar, lalpha,
-                     True).A.astype(dtype)
-  #K = ((1-alpha) * L).astype(dtype)*1
-  K = ((1-alpha) * L).astype(dtype)*1
+  # L = create_L(Src, Tar, lalpha,
+  #                    True).A.astype(dtype)
+  # #K = ((1-alpha) * L).astype(dtype)*1
+  # K = ((1-alpha) * L).astype(dtype)*1
   #Eq.4
   coeff = 1.0/((l.T - mu)**2 + eta**2)
   #Eq. 3
@@ -167,7 +169,7 @@ def main(data, eta,lalpha):
   #return rows, cols 
   return Xt
 
-def grampa(Src, Tar, eta):
+def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None):
   """
   Summary or Description of the Function
 
@@ -180,8 +182,16 @@ def grampa(Src, Tar, eta):
   Xt similarity Matrix
   """
   n = Src.shape[0]
-  l,U = eigh(Src)
-  mu,V = eigh(Tar)
+  if lap:
+      l,U = decompose_laplacian(Src)
+      mu,V = decompose_laplacian(Tar)
+  else:
+      if decomp is not None:
+          l, U = decomp[0]
+          mu, V = decomp[1]
+      else:
+          l,U = eigh(Src)
+          mu,V = eigh(Tar)
   l = np.array([l])
   mu = np.array([mu])
 

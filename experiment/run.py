@@ -84,6 +84,8 @@ def run_alg(_alg, _data, Gt, accs, _log, _run, mall, mon=False, pstart=5):
         time.sleep(2)
     start = time.time()
     res = alg_exe(alg, data, args)
+    # print(res)
+    # print(res.shape)
     time1.append(time.time()-start)
     if mon:
         proc.send_signal(signal.SIGINT)
@@ -91,7 +93,8 @@ def run_alg(_alg, _data, Gt, accs, _log, _run, mall, mon=False, pstart=5):
     # gc.collect()
 
     sim, cost = format_output(res)
-
+    # print(sim)
+    # print(cost)
     try:
         _run.log_scalar(f"{algname}.sim.size", sim.size)
         _run.log_scalar(f"{algname}.sim.max", sim.max())
@@ -240,6 +243,8 @@ def run_algs(g, algs, _log, _run, prep=False, circular=False):
     data = {
         'Src': Src,
         'Tar': Tar,
+        'src_e': Src_e,
+        'tar_e': Tar_e,
         'L': L,
         'S': S,
         'li': li,

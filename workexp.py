@@ -266,6 +266,8 @@ def main(_run, _log, verbose=False, load=[], plot=[], nice=12, mon=False):
         # res6 = np.expand_dims(res, axis=0)
     else:
         time5, res6 = run_exp(G, path)
+        print(time5)
+        print(res6)
 
     np.save(f"{path}/_time5", time5)
     np.save(f"{path}/_res6", res6)

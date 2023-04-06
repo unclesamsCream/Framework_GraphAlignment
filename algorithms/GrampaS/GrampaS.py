@@ -1,192 +1,264 @@
+from algorithms import Grampa
+from Utils import adj_from_edges, compute_laplacian, embed_spectral, expand_matrix
 import numpy as np
-#from scipy.optimize import linear_sum_assignment
 from numpy.linalg import inv
 from numpy.linalg import eigh,eig
 import networkx as nx 
-import random
-from math import floor, log2
-#from lapsolver import solve_dense
-import scipy as sci
-#from lapsolver import solve_dense
-from numpy import inf, nan
-import scipy.sparse as sps
-try:
+import warnings
+import itertools
+from sklearn.manifold import spectral_embedding
+from lapjv import lapjv
+from sklearn.cluster import k_means
+from scipy.spatial.distance import cdist
+from sklearn.exceptions import ConvergenceWarning
 
-    import lapjv
+def split_graph_hyper(graph, clustering, weighting_scheme='ncut', rcon=True): # POTENTIAL: add mem_eff=False parameter
+    '''Split a graph into disjunct clusters and construct weighted graph where a node represents a cluster.
+    
+    Description:
+        - Removes all edges between clusters.
+        - Adds a node per cluster to a new graph.
+        - Adds edges between new nodes with a weight corresponding to the amount of edges removed between them.
 
-except:
+    Parameters:
+        graph (np.array): nxn adjacency matrix
 
-    pass
+        clustering: A clustering for the input graph.
+            /format/ Clustering is a dict {node (int): cluster (int)} containing the input graph clustering.
+                     Clustering values has to be consecutive, i.e. >>>np.unique(clustering.valuess()) yields [0,1,2,...,k-1]
+
+        weighting_scheme: The weighting scheme to be used. Current implementation allows for:
+                          'cut': based on number of connections between clusters.
+                          ###NOT IMPLEMENTED###'size': based on size of cluster relative to total number of nodes
+
+    Returns:
+        cluster_graph: (kxk np.array) A graph constructed as per above description.
+        subgraphs: A list of edgelist corresponding to graphs where each graph is a disjuncted cluster of the input graph.
+    '''
+    k = np.max(list(clustering.values())) + 1 # Assuming input format is respected
+    # new graph of clusters represented by its adjacency matrix
+    cluster_graph = np.zeros(shape=(k, k))
+    clusters = [[node for (node, c) in clustering.items() if c==i] for i in range(k)]
+    cluster_sizes = np.array([len(c) for c in clusters])
+
+    # subgraphs = [[] for _ in range(k)]
+    p_G = nx.from_edgelist(graph)
+    Gs = [p_G.subgraph(c).copy() for c in clusters]
+    subgraphs = [np.array(G.edges) for G in Gs]
+    cons = [list(nx.connected_components(G)) for G in Gs]
+    
+    # Build hyper graph
+    for (e, f) in list(graph):
+        c1 = clustering[e]
+        c2 = clustering[f]
+        if c1 != c2:
+            if weighting_scheme == 'cut' or weighting_scheme == 'ncut':
+                # add edge in cluster graph adjacency matrix
+                cluster_graph[c1, c2] += 1
+                cluster_graph[c2, c1] += 1
+
+    if weighting_scheme == 'size':
+        # e_AB = max(|A|, |B|) / |V|
+        for i in range(k):
+            for j in range(k):
+                if i != j:
+                    cluster_graph[i, j] = cluster_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / len(np.unique(graph))
+    if weighting_scheme == 'ncut':
+        matrix_iterator = list(itertools.combinations(range(k), r=2))
+        for (i, j) in matrix_iterator:
+            cut = cluster_graph[i,j]
+            ncut = (cut / cluster_sizes[i]) + (cut / cluster_sizes[j])
+            cluster_graph[i,j] = cluster_graph[j,i] = ncut
+
+    return cluster_graph, subgraphs, cons # isolated
 
 
-def create_L(A, B, lalpha=1, mind=None, weighted=True):
-    n = A.shape[0]
-    m = B.shape[0]
+def marpa(src_graph, tar_graph, K=3, rsc=0, weighting_scheme='ncut', lap=False, e_dim=1):
+    """
+    MAtching by Recursive Partition Alignment
+    ____
+    Summary or Description of the Function
 
-    if lalpha is None:
-        return sps.csr_matrix(np.ones((n, m)))
+    Parameters:
+      src_graph (np.array): Edge list of source graph.
+      tar_graph (np.array): Edge list of target graph.
 
-    a = A.sum(1)
-    b = B.sum(1)
-    # print(a)
-    # print(b)
-    DegA=A.sum()
-    DegB=B.sum()
-    # a_p = [(i, m[0,0]) for i, m in enumerate(a)]
-    a_p = list(enumerate(a))
-    a_p.sort(key=lambda x: x[1])
+    Returns:
+      matching (np.array): Array of 2-tuples each representing a matching pair nodes (n1, n2) where n1 is in src_graph and n2 is in tar_graph.
+    """
 
-    # b_p = [(i, m[0,0]) for i, m in enumerate(b)]
-    b_p = list(enumerate(b))
-    b_p.sort(key=lambda x: x[1])
+    n = len(np.unique(src_graph))
+    if rsc == 0: rsc = np.sqrt(n)
 
-    ab_m = [0] * n
-    s = 0
-    e = floor(lalpha * log2(m))
-    a=a/DegA
-    b=b/DegB
-    for ap in a_p:
-        while(e < m and
-              abs(b_p[e][1] - ap[1]) <= abs(b_p[s][1] - ap[1])
-              ):
-            e += 1
-            s += 1
-        ab_m[ap[0]] = [bp[0] for bp in b_p[s:e]]
+    eta = 0.2
+    
+    matching = -1 * np.ones(shape=(n, ), dtype=int)
+    all_pos = []
+    def match_grampa(src, tar):
+        if isinstance(src, tuple) and isinstance(tar, tuple):
+            src_adj, src_map = src
+            tar_adj, tar_map = tar
+        else:
+            src_adj, src_map = adj_from_edges(src)
+            tar_adj, tar_map = adj_from_edges(tar)
+        diff = len(src_map) - len(tar_map)
+        if diff < 0: # expand sub src
+            src_adj = expand_matrix(src_adj, abs(diff))
+            src_map = list(src_map) + [-1] * abs(diff)
+        if diff > 0: # expand sub tar
+            tar_adj = expand_matrix(tar_adj, diff)
+            tar_map = list(tar_map) + [-1] * diff
 
-    # print(ab_m)
+        sub_sim = Grampa.grampa(src_adj, tar_adj, eta, lap=lap)
+        r, c, _ = lapjv(-sub_sim)
+        match = list(zip(range(len(c)), c))
+        # translate with map and add to solution
+        for (n1, n2) in match:
+            matching[src_map[n1]] = tar_map[n2]
 
-    li = []
-    lj = []
-    lw = []
-    for i, bj in enumerate(ab_m):
-        for j in bj:
-            # d = 1 - abs(a[i]-b[j]) / a[i]
-            d = 1 - abs(a[i]-b[j]) / max(a[i], b[j])
-            #d = 1 - abs(a[i]-b[j]) / a[i]+b[j]
-            if mind is None:
-                if d > 0:
-                    li.append(i)
-                    lj.append(j)
-                    lw.append(d)
+    def cluster_recurse(src_e, tar_e, pos=[(0,0)]):
+        pos = pos.copy()
+        src_adj, src_nodes = adj_from_edges(src_e)
+        tar_adj, tar_nodes = adj_from_edges(tar_e)
+
+        #### 1. Spectrally embed graphs into 1 dimension.
+        warnings.simplefilter('error', category=UserWarning)
+        try:
+            src_embedding = spectral_embedding(src_adj, n_components=e_dim)            
+        except Exception as e:
+            match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
+            return
+        try:
+            tar_embedding = spectral_embedding(tar_adj, n_components=e_dim)
+        except Exception as e:
+            match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
+            return
+            
+        # Compute clusters on embedded data with kmeans and lloyd's algorithm
+        src_centroids, _src_cluster, _ = k_means(src_embedding, n_clusters=K, n_init=10)
+        # Seed target graph kmeans by using the src centroids.
+        # tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, init=src_centroids, n_init=1, random_state=SEED)
+        tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, n_init=10)
+
+        src_cluster = dict(zip(src_nodes, _src_cluster))
+        tar_cluster = dict(zip(tar_nodes, _tar_cluster))
+
+        # 2. split graphs (src, tar) according to cluster.
+        src_cluster_graph, src_subgraphs, src_cons = split_graph_hyper(src_e, src_cluster, weighting_scheme=weighting_scheme)
+        tar_cluster_graph, tar_subgraphs, tar_cons = split_graph_hyper(tar_e, tar_cluster, weighting_scheme=weighting_scheme)
+
+        C_UPDATED = False
+
+        # 3. match cluster_graph.
+        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta)
+        row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
+        partition_alignment = list(zip(range(len(row)), row))
+
+        # 4. Refine clusters
+        # Find cluster sizes
+        rc_size_diff = {}
+        cr_size_diff = {}
+        for (r, c) in partition_alignment:
+            src_r = len([x for x in _src_cluster if x == r])
+            src_c = len([x for x in _src_cluster if x == c])
+            tar_r = len([x for x in _tar_cluster if x == r])
+            tar_c = len([x for x in _tar_cluster if x == c])
+            rc_size_diff[(r, c)] = src_r - tar_c
+            cr_size_diff[(c, r)] = src_c - tar_r
+
+        rc_sum = abs(np.array(list(rc_size_diff.values()))).sum()
+        cr_sum = abs(np.array(list(cr_size_diff.values()))).sum()
+        if rc_sum < cr_sum:
+            part_size_diff = rc_size_diff
+        else:
+            part_size_diff = cr_size_diff
+            partition_alignment = [(c, r) for (r,c) in partition_alignment]
+
+        # for each positive entry in part_size_diff borrow from negative entries
+        # for (pp, size) in part_size_diff.items():
+        for i in range(len(part_size_diff)):
+            pp, size = list(part_size_diff.items())[i]
+            if size > 0:
+                centroid = np.array([tar_centroids[pp[1]]])
+                # find candidate clusters from which to borrow nodes
+                candidate_clusters = [k for (k, v) in part_size_diff.items() if v < 0]
+                # list of indices of tar_nodes that correspond to candidate cluster c_i for all c_i candidate (target) clusters.
+                cand_idcs_list = [[i for i, v in enumerate(_tar_cluster) if v == j[1]] for j in candidate_clusters]
+                cand_points = [tar_embedding[idcs] for idcs in cand_idcs_list]
+                dists = [cdist(pts, centroid) for pts in cand_points]
+
+                while size > 0:
+                    best_dist = np.inf
+                    best_idx = (0, 0)
+                    best_c = (None, None)
+
+                    for i, k in enumerate(candidate_clusters):
+                        dist = dists[i]
+                        min_idx = np.argmin(dist)
+                        d = dist[min_idx]
+                        if d < best_dist and part_size_diff[k] < 0:
+                            best_dist = d
+                            best_idx = (i, min_idx)
+                            best_c = k
+
+                    # Update loop variables
+                    size -= 1
+                    if best_c != (None, None):
+                        dists[best_idx[0]][best_idx[1]] = np.inf
+                        part_size_diff[best_c] += 1
+
+                        # Adjust clustering
+                        _tar_cluster[cand_idcs_list[best_idx[0]][best_idx[1]]] = pp[1]
+                        C_UPDATED = True
+
+        # Only recompute cluster if cluster was changed
+        if C_UPDATED:
+            tar_cluster = dict(zip(tar_nodes, _tar_cluster))
+            tar_cluster_graph, tar_subgraphs, _ = split_graph_hyper(tar_e, tar_cluster)        
+            new_part_size_diff = {}
+            for (c_s, c_t) in partition_alignment:
+                c_s_size = len([x for x in _src_cluster if x == c_s])
+                c_t_size = len([x for x in _tar_cluster if x == c_t])
+                new_part_size_diff[(c_s, c_t)] = c_s_size - c_t_size
+
+        # 4. recurse or match
+        for i, (c_s, c_t) in enumerate(partition_alignment):
+            sub_src = src_subgraphs[c_s]
+            sub_tar = tar_subgraphs[c_t]
+            c_s_nodes = np.unique(sub_src)
+            c_t_nodes = np.unique(sub_tar)
+            len_cs = len(c_s_nodes)
+            len_ct = len(c_t_nodes)
+
+            if len_cs == 0 or len_ct == 0:
+                break
+
+            # if cluster size is smaller than sqrt(|V|) then align nodes.
+            #  else cluster recurse.
+            if len(c_s_nodes) <= rsc or len(c_t_nodes) <= rsc:
+                match_grampa(sub_src, sub_tar)
+                all_pos.append(pos)
             else:
-                li.append(i)
-                lj.append(j)
-                lw.append(mind if d <= 0 else d)
-                # lw.append(0.0 if d <= 0 else d)
-                # lw.append(d)
+                pos.append((c_s, c_t))
+                cluster_recurse(sub_src, sub_tar, pos=pos)
 
-                # print(len(li))
-                # print(len(lj))
-                # print(len(lj))
+    cluster_recurse(src_graph, tar_graph)
+    if len(all_pos) == 0:
+        pos_res = {'max_depth': 0, 'avg_depth': 0}
+    else:
+        pos_res = {'max_depth': len(max(all_pos, key=lambda x: len(x))), 'avg_depth': np.array([len(x) for x in all_pos]).mean()}
+    matching = np.c_[np.linspace(0, n-1, n).astype(int), matching].T
 
-    return sps.csr_matrix((lw, (li, lj)), shape=(n, m))
+    return matching, pos_res
 
-def decompose_laplacian(A):
-
-    #  adjacency matrix
-
-    Deg = np.diag((np.sum(A, axis=1)))
-
-    n = np.shape(Deg)[0]
-    
-    Deg = sci.linalg.fractional_matrix_power(Deg, -0.5)
-    L = (np.identity(n)) - Deg @ A @ Deg
-    #P=np.linalg.inv(Deg)@ A@np.linalg.inv(Deg)
-    #L=np.identity(n) + P
-    #L=Deg-A
-    D, V = np.linalg.eigh(L)
-
-    return [D, V]
-
-
-def decompose_Tlaplacian(A,rA):
-
-    #  adjacency matrix
-    r= (rA**2-1)
-    Deg = np.diag((np.sum(A, axis=1)))
-
-    n = np.shape(Deg)[0]
-
-    #Deg = sci.linalg.fractional_matrix_power(Deg, -0.5)
-
-    L = r* np.identity(n) + Deg - rA*A 
-   # print((sci.fractional_matrix_power(Deg, -0.5) * A * sci.fractional_matrix_power(Deg, -0.5)))
-    # '[V1, D1] = eig(L1);
-
-    D, V = np.linalg.eigh(L)
-
-    return [D, V]
-
-def seigh(A):
-  """
-  Sort eigenvalues and eigenvectors in descending order. 
-  Not used.
-  """
-  l, u = np.linalg.eigh(A)
-  idx = l.argsort()[::-1]   
-  l = l[idx]
-  u = u[:,idx]
-  return l, u
-def main(data, eta,lalpha):
-  Src = data['Src']
-  Tar = data['Tar']
+def main(data, eta, k, rsc, lap, edim):
+  Src = data['src_e']
+  Tar = data['tar_e']
   n = Src.shape[0]
-  #l,U =eigh(Src)
-  #mu,V = eigh(Tar)
-  #lalpha=10000
-  alpha=0
-  dtype = np.float32
-  L = create_L(Src, Tar, lalpha,
-                     True).A.astype(dtype)
-  K = ((1-alpha) * L).astype(dtype)*1
-  #l,U =eigh(Src)
-  #mu,V = eigh(Tar)
-  l, U = decompose_laplacian(Src)
-  mu, V = decompose_laplacian(Tar)
-  #l, U = decompose_Tlaplacian(Src,2)
- # mu, V = decompose_Tlaplacian(Tar,2)
-  l = np.array([l])
-  mu = np.array([mu])
-  #Eq.4
-  #coeff = 1.0/((l.T - mu)**2 + eta**2)
-  coeff = 1.0/((l.T - mu)**2 + eta**2)
-  #Eq. 3
-  #coeff = coeff * (U.T @ np.ones((n,n)) @ V)
-  coeff = coeff * (U.T @ K @ V)
-  X = U @ coeff @ V.T 
+  # src = (Src, np.linspace(0, n-1, n).astype(int))
+  # tar = (Tar, np.linspace(0, n-1, n).astype(int))
+  # matching, pos = marpa(src, tar, K=k, rsc=rsc, weighting_scheme='ncut')
+  matching, pos = marpa(Src, Tar, K=k, rsc=rsc, weighting_scheme='ncut', lap=lap, e_dim=edim)
+  print(pos)
+  return matching
 
-  Xt = X.T*-1
-  
-  #Xt=-X
-  # Solve with linear assignment maximizing the similarity 
-  # row,col = linear_sum_assignment(Xt, maximize=True)
-
-  # Alternatively, we can use a more efficient solver.
-  # The solver works on cost minimization, so take -X 
-  #rows, cols = solve_dense(-Xt)
-  #return rows, cols 
-  try:
-    cols, rows, _ = lapjv.lapjv(Xt)
-    matching = np.c_[np.linspace(0, n-1, n).astype(int),rows]
-  except Exception:
-    cols, rows = sci.optimize.linear_sum_assignment(Xt)
-    matching = np.c_[rows,cols]
-    
-
-    # print(cols)
-
-    # print(rows)
-
-    #matching = np.c_[np.linspace(0, n-1, n).astype(int),cols]
-    
-    #matching = np.c_[cols,np.linspace(0, n-1, n).astype(int)]
-    #matching = np.c_[rows,np.linspace(0, n-1, n).astype(int)]
-
-    # print(matching)
-
-  matching = matching[matching[:, 0].argsort()]
-
-    # print(matching)
-
-  return matching.astype(int).T
-  #return Xt

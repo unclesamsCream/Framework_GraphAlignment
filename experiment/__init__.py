@@ -171,13 +171,19 @@ _KLAU_args = {
     'verbose': True
 }
 _Grampa_args = {
-   # 'eta': 0.2
-   'eta': 0.2,
-   'lalpha':10000
+    # 'eta': 0.2
+    'eta': 0.2,
+    'lalpha':10000,
+    'lap': True
 }
 _GrampaS_args = {
+   # 'eta': 0.2,
+   # 'lalpha':10000
     'eta': 0.2,
-    'lalpha':10000
+    'k': 3,
+    'rsc': 1500,
+    'lap': True,
+    'edim': 3
 }
 _GRASPB_args = {
     'laa': 3,
