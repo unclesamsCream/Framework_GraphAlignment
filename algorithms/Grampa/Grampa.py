@@ -107,7 +107,7 @@ def decompose_laplacian(A):
     #P=np.linalg.inv(Deg)@ A@np.linalg.inv(Deg)
     #L=np.identity(n) - P
     #L= A+Deg
-   # print((sci.fractional_matrix_power(Deg, -0.5) * A * sci.fractional_matrix_power(Deg, -0.5)))
+    # print((sci.fractional_matrix_power(Deg, -0.5) * A * sci.fractional_matrix_power(Deg, -0.5)))
     # '[V1, D1] = eig(L1);
 
     D, V = np.linalg.eigh(L)

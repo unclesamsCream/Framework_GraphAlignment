@@ -52,7 +52,6 @@ def run_alg(_alg, _data, Gt, accs, _log, _run, mall, mon=False, pstart=5):
     # np.random.seed(_seed)
 
     alg, args, mts, algname = _alg
-
     _log.debug(f"{f' {algname} ':#^35}")
 
     data = copy.deepcopy(_data)
@@ -245,6 +244,7 @@ def run_algs(g, algs, _log, _run, prep=False, circular=False):
         'Tar': Tar,
         'src_e': Src_e,
         'tar_e': Tar_e,
+        'gt': Gt,
         'L': L,
         'S': S,
         'li': li,
