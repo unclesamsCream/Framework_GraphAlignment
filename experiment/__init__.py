@@ -173,7 +173,7 @@ _KLAU_args = {
 _Grampa_args = {
     # 'eta': 0.2
     'eta': 0.2,
-    'lalpha':10000,
+    'lalpha': 10000,
     'lap': True
 }
 _GrampaS_args = {
@@ -186,6 +186,8 @@ _ALHPA_args = {
     'eta': 0.2,
     'rsc': 1000,
     'lap': True,
+    'ki': True,
+    'lalpha': 10000,
 }
 _GRASPB_args = {
     'laa': 3,
@@ -220,8 +222,8 @@ _algs = [
     (Grampa, _Grampa_args, [3], "GRAMPA"),
     (GraspB, _GRASPB_args, [-96], "GRASPB"),
     # (GrampaS, _GrampaS_args, [4], f'ALPHA(k={_GrampaS_args["k"]})'),
-    (GrampaS, _GrampaS_args, [4], f'ALPHA(EG=avg)'),
-    (ALHPA, _ALHPA_args, [4], "ALHPA(EG=max)"),
+    (GrampaS, _GrampaS_args, [4], f'ALPHA'),
+    (ALHPA, _ALHPA_args, [4], "ALHPA"),
 ]   
 
 _acc_names = [

@@ -125,7 +125,7 @@ def seigh(A):
   u = u[:,idx]
   return l, u
 
-def main(data, eta,lalpha, lap):
+def main(data, eta,lalpha, lap, ki=False):
   Src = data['Src']
   Tar = data['Tar']
   n = Src.shape[0]
@@ -135,7 +135,7 @@ def main(data, eta,lalpha, lap):
       mu, V = decompose_laplacian(Tar)
   else:
       l,U =eigh(Src)
-      mu,V = eigh(Tar)
+      mu,V = eigh(Tar)      
   
   #l, U = decompose_Tlaplacian(Src,1.5)
   #mu, V = decompose_Tlaplacian(Tar,1.5)
@@ -144,18 +144,20 @@ def main(data, eta,lalpha, lap):
   #lalpha=math.log(n,2)*5
   #lalpha=n/10
   
+  if ki:
+      alpha=0
+      dtype = np.float32
+      L = create_L(Src, Tar, lalpha,
+                   True).A.astype(dtype)
+      K = ((1-alpha) * L).astype(dtype)*1
+      coeff = 1.0/((l.T - mu)**2 + eta**2)
+      coeff = coeff * (U.T @ K @ V)
+  else:
+      #Eq.4
+      coeff = 1.0/((l.T - mu)**2 + eta**2)
+      #Eq. 3
+      coeff = coeff * (U.T @ np.ones((n,n)) @ V)
 
-  alpha=0
-  dtype = np.float32
-  # L = create_L(Src, Tar, lalpha,
-  #                    True).A.astype(dtype)
-  # #K = ((1-alpha) * L).astype(dtype)*1
-  # K = ((1-alpha) * L).astype(dtype)*1
-  #Eq.4
-  coeff = 1.0/((l.T - mu)**2 + eta**2)
-  #Eq. 3
-  coeff = coeff * (U.T @ np.ones((n,n)) @ V)
-  #coeff = coeff * (U.T @ K @ V)
   X = U @ coeff @ V.T
 
   Xt = X.T
@@ -169,7 +171,7 @@ def main(data, eta,lalpha, lap):
   #return rows, cols 
   return Xt
 
-def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None):
+def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None, ki=False, lalpha=10000):
   """
   Summary or Description of the Function
 
@@ -194,6 +196,22 @@ def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None):
           mu,V = eigh(Tar)
   l = np.array([l])
   mu = np.array([mu])
+  
+  if ki:
+      alpha=0
+      dtype = np.float32
+      L = create_L(Src, Tar, lalpha,
+                   True).A.astype(dtype)
+      K = ((1-alpha) * L).astype(dtype)*1
+      coeff = 1.0/((l.T - mu)**2 + eta**2)
+      coeff = coeff * (U.T @ K @ V)
+  else:
+      #Eq.4
+      coeff = 1.0/((l.T - mu)**2 + eta**2)
+      #Eq. 3
+      coeff = coeff * (U.T @ np.ones((n,n)) @ V)
+
+  X = U @ coeff @ V.T  
 
   #Eq.4
   coeff = 1.0/((l.T - mu)**2 + eta**2)
@@ -210,3 +228,4 @@ def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None):
   #rows, cols = solve_dense(-Xt)
   #return rows, cols 
   return Xt
+

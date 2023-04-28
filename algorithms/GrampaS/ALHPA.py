@@ -12,12 +12,12 @@ from sklearn.cluster import k_means
 from scipy.spatial.distance import cdist
 from sklearn.exceptions import ConvergenceWarning
 import time
-from threading import Lock
 
 def printLog(*args, **kwargs):
     print(*args, **kwargs)
     # with open('/home/kb/Documents/Projects/Framework_GraphAlignment/logfiles/run_log.txt','a') as file:
     #     print(*args, **kwargs, file=file)
+
 
 def split_graph_hyper(graph, clustering, weighting_scheme='ncut', rcon=True): # POTENTIAL: add mem_eff=False parameter
     '''Split a graph into disjunct clusters and construct weighted graph where a node represents a cluster.
@@ -80,7 +80,7 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut', rcon=True): # 
 
     return cluster_graph, subgraphs, cons # isolated
 
-def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
+def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=None, ki=False, lalpha=10000):
     """
     MAtching by Recursive Partition Alignment
     ____
@@ -99,8 +99,8 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
 
     eta = 0.2
 
-    mlock = Lock()
     matching = -1 * np.ones(shape=(n, ), dtype=int)
+    readjustment_accs = []
     all_pos = []
     def match_grampa(src, tar):
         if isinstance(src, tuple) and isinstance(tar, tuple):
@@ -133,15 +133,14 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
         match = list(zip(range(len(c)), c))
         #printLog(f'GRAMPA:{match}')
         # translate with map and add to solution
-        with mlock:
-            for (n1, n2) in match:
-                matching[src_map[n1]] = tar_map[n2]
+        for (n1, n2) in match:
+            matching[src_map[n1]] = tar_map[n2]
 
     def cluster_recurse(src_e, tar_e, pos=[(0,0)]):
         pos = pos.copy()
         src_adj, src_nodes = adj_from_edges(src_e)
         tar_adj, tar_nodes = adj_from_edges(tar_e)
-
+        
         #### 1. Spectrally embed graphs into 1 dimension.
         # l, U, snz = decompose_spectral(src_adj)
         # mu, V, tnz = decompose_spectral(tar_adj)
@@ -154,12 +153,12 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
 
         # Find the number of clusters based on eigengap heuristics
         diffs = np.array([abs(l[i-1] - l[i]) for i in range(1, len(l))])
-        # i = 2
-        # while diffs[i] < diffs.mean():
-        #     i += 1
-        diffs[0] = diffs[1] = 0
-        K = np.argmax(diffs)
-        printLog(f'\nFound K={K} at position={pos}\ndiffs: {diffs}\nmean: {diffs.mean()}')
+        i = 2
+        while diffs[i] < diffs.mean():
+            i += 1
+        K = i + 1
+        # printLog(f'\nFound K={K} at position={pos}\ndiffs: {diffs}\nmean: {diffs.mean()}')
+        printLog(f'\nFound K={K} at position={pos}')
         src_embedding = src_embedding.T[:K].T
         tar_embedding = tar_embedding.T[:K].T
 
@@ -176,8 +175,8 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
         try:
             #printLog('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
-            # tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, init=src_centroids, n_init=1)
-            tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, n_init=10)            
+            tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, init=src_centroids, n_init=1)
+            # tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, n_init=10)            
         except Exception as e:
             #printLog(f'Troublesome graph!!!\n Matching parent graph using GRAMPA')
             # match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes), decomp=[(l, U), (mu, V)])
@@ -189,10 +188,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
 
         src_cluster = dict(zip(src_nodes, _src_cluster))
         tar_cluster = dict(zip(tar_nodes, _tar_cluster))
-
-        cll = [[k for k,v in src_cluster.items() if v == i] for i in range(K)]
-        clll = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
-        #printLog(f'cluster numbers: src:{[len(x) for x in cll]}, tar:{[len(x) for x in clll]}')
+        src_nodes_by_cluster = [[k for k,v in src_cluster.items() if v == i] for i in range(K)]
+        tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
+        printLog(f'\ncluster numbers: src:{[len(x) for x in src_nodes_by_cluster]}, tar:{[len(x) for x in tar_nodes_by_cluster]}\n')
 
         # 2. split graphs (src, tar) according to cluster.
         src_cluster_graph, src_subgraphs, src_cons = split_graph_hyper(src_e, src_cluster, weighting_scheme=weighting_scheme)
@@ -204,34 +202,21 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
         # 3. match cluster_graph.
         #printLog(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
 
-        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta)
+        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta# , ki=ki, lalpha=lalpha
+                            )
         row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
-        partition_alignment = list(zip(range(len(row)), row))
-        #printLog(f'cluster sim given by grampa:\n{sim}\n')
-        # 4. Refine clusters
-        # Find cluster sizes
-        rc_size_diff = {}
-        cr_size_diff = {}
-        for (r, c) in partition_alignment:
-            src_r = len([x for x in _src_cluster if x == r])
-            src_c = len([x for x in _src_cluster if x == c])
-            tar_r = len([x for x in _tar_cluster if x == r])
-            tar_c = len([x for x in _tar_cluster if x == c])
-            rc_size_diff[(r, c)] = src_r - tar_c
-            cr_size_diff[(c, r)] = src_c - tar_r
+        partition_alignment = list(zip(range(len(col)), col))
 
-            #printLog(f'option1: src_r({r})_size: {src_r}, tar_c({c})_size: {tar_c}')
-            #printLog(f'option2: src_c({c})_size: {src_c}, tar_r({r})_size: {tar_r}')
-
-        rc_sum = abs(np.array(list(rc_size_diff.values()))).sum()
-        cr_sum = abs(np.array(list(cr_size_diff.values()))).sum()
-        if rc_sum < cr_sum:
-            #printLog(f'min sum is {rc_sum}. Choosing rc_size_diff: {rc_size_diff}. (cr diff: {cr_size_diff})')
-            part_size_diff = rc_size_diff
-        else:
-            #printLog(f'min sum is {cr_sum}. Choosing cr_size_diff: {cr_size_diff}. (rc diff: {rc_size_diff})')
-            part_size_diff = cr_size_diff
-            partition_alignment = [(c, r) for (r,c) in partition_alignment]
+        cur_part_acc = []
+        part_size_diff = {}
+        for (c_s, c_t) in partition_alignment:
+            # printLog(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
+            part_size_diff[(c_s, c_t)] = len(src_nodes_by_cluster[c_s]) - len(tar_nodes_by_cluster[c_t])
+            s_trans_nodes = [np.argwhere(gt[0] == node)[0][0] for node in tar_nodes_by_cluster[c_t]]
+            acc_count = np.array([node in src_nodes_by_cluster[c_s] for node in s_trans_nodes], dtype=int)
+            #printLog(f'\nCLUSTER ACC (proportion of nodes in target cluster also present in src cluster)\n\n{acc_count.sum()}/{len(acc_count)}={acc_count.mean()}')
+            cur_part_acc.append(acc_count.sum())
+        cur_part_acc = np.array(cur_part_acc)
 
         # for each positive entry in part_size_diff borrow from negative entries
         # for (pp, size) in part_size_diff.items():
@@ -273,14 +258,22 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
         # Only recompute cluster if cluster was changed
         if C_UPDATED:
             tar_cluster = dict(zip(tar_nodes, _tar_cluster))
-            tar_cluster_graph, tar_subgraphs, _ = split_graph_hyper(tar_e, tar_cluster)        
-            new_part_size_diff = {}
+            tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
+            tar_cluster_graph, tar_subgraphs, _ = split_graph_hyper(tar_e, tar_cluster)
+            new_part_acc = []
             for (c_s, c_t) in partition_alignment:
-                c_s_size = len([x for x in _src_cluster if x == c_s])
-                c_t_size = len([x for x in _tar_cluster if x == c_t])
-                new_part_size_diff[(c_s, c_t)] = c_s_size - c_t_size
-            #printLog(f'new_part_size_diff:\n{new_part_size_diff}')
+                # printLog(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
+                part_size_diff[(c_s, c_t)] = len(src_nodes_by_cluster[c_s]) - len(tar_nodes_by_cluster[c_t])
+                s_trans_nodes = [np.argwhere(gt[0] == node)[0][0] for node in tar_nodes_by_cluster[c_t]]
+                acc_count = np.array([node in src_nodes_by_cluster[c_s] for node in s_trans_nodes], dtype=int)
+                #printLog(f'\nCLUSTER ACC --- AFTER UPDATE\n\n{acc_count.sum()}/{len(acc_count)}={acc_count.mean()}')
+                new_part_acc.append(acc_count.sum())
 
+            new_part_acc = np.array(new_part_acc)
+            printLog(f'\ncluster numbers after: src:{[len(x) for x in src_nodes_by_cluster]}, tar:{[len(x) for x in tar_nodes_by_cluster]}\n')
+            printLog(f'\n cluster acc before: {cur_part_acc}, after: {new_part_acc}')
+            printLog(part_size_diff)
+            readjustment_accs.append((new_part_acc-cur_part_acc).sum())
         # 4. recurse or match
         for i, (c_s, c_t) in enumerate(partition_alignment):
             #printLog(f'Iterating partition alignments -- Current pair = {(c_s, c_t)}')
@@ -309,21 +302,22 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False):
     if len(all_pos) == 0:
         pos_res = {'max_depth': 0, 'avg_depth': 0}
     else:
-        pos_res = {'max_depth': len(max(all_pos, key=lambda x: len(x))), 'avg_depth': np.array([len(x) for x in all_pos]).mean()}
+        pos_res = {'max_depth': len(max(all_pos, key=lambda x: len(x))), 'avg_depth': np.array([len(x) for x in all_pos]).mean()}# , pos': all_pos
     matching = np.c_[np.linspace(0, n-1, n).astype(int), matching].astype(int).T
 
-    return matching, pos_res
+    return matching, pos_res, np.array(readjustment_accs)
 
-def main(data, eta, rsc, lap):
-    printLog(f'\n\n\nstarting run:\nargs: (eta, rsc, lap)={eta, rsc, lap}')
+def main(data, eta, rsc, lap, ki, lalpha):
+    printLog(f'\n\n\nstarting run:\nargs: (, eta, rsc, lap, ki, lalpha)={(eta, rsc, lap, ki, lalpha)}')
     Src = data['src_e']
     Tar = data['tar_e']
+    gt = data["gt"]
+
     n = Src.shape[0]
-    # src = (Src, np.linspace(0, n-1, n).astype(int))
-    # tar = (Tar, np.linspace(0, n-1, n).astype(int))
-    # matching, pos = marpa(src, tar, K=k, rsc=rsc, weighting_scheme='ncut')
     s = time.time()
-    matching, pos = alhpa(Src, Tar, rsc=rsc, weighting_scheme='ncut', lap=lap)
+    matching, pos, readj_accs = alhpa(Src, Tar, rsc=rsc, weighting_scheme='ncut', lap=lap, gt=gt, ki=ki, lalpha=lalpha)
     printLog(f'Produced matching in time: {time.time()-s}')
-    printLog(pos)
+    printLog(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
+    for k, v in pos.items():
+        printLog(f'{k}:\n{v}')
     return matching

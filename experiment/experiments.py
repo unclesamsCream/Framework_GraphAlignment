@@ -310,10 +310,10 @@ def real():
 
     run = [
         # 10,
-        12,
-        # 13,
+        # 12, 
+        13,
     ]
-    iters = 1
+    iters = 3
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -321,18 +321,18 @@ def real():
         # "high-school",
         # "yeast"
         # "bio-celegans",         # 453   / 2k    / connected
-        # "in-arenas",            # 1.1k  / 5.4k  / connected
+        "in-arenas",            # 1.1k  / 5.4k  / connected
         # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        "inf-power",            # 4.9K  / 6.6K  / connected
+        # "inf-power",            # 4.9K  / 6.6K  / connected
         # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
         #  #"CA-AstroPh",           # 18k   / 195k  / connected
         # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
         # #  "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
         # #  "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
-        # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
+        "socfb-Haverford76",    # 1.4K  / 59.6K / connected
         # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
-        # "soc-facebook",         # 4k    / 87k   / connected
+        "soc-facebook",         # 4k    / 87k   / connected
         #  "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
     ]
 
@@ -347,7 +347,7 @@ def real():
         0.05,
         # 0.00,
         # 0.05,
-        0.10,
+        # 0.10,
         # 0.15,
         # 0.20,
         #0.25,
@@ -419,9 +419,9 @@ def synthetic():
 
     iters = 1
     run = [
-        # 10,
-        12,
-        # 13,
+        # 10, 
+        # 12,
+        13,
     ]
     graph_names = [
         #"arenas",
@@ -430,16 +430,20 @@ def synthetic():
         # "watts_str",
         # "gnp",
         # "barabasi",
-        # "ER(2000)",
-        # "ER(4000)",
-        # "ER(5000)",
+        "ER(2000)",
+        "ER(4000)",
+        "ER(5000)",
         # "SBM(2000)",
         # "SBM(4000)",
-        "SBM(10000k10)",
+        # "SBM(6000k5_.5)",
+        # "SBM(6000k5_.6)",
+        # "SBM(6000k5_.7)",
+        # "SBM(6000k5_.8)",
+        # "SBM(6000k5_.9)",
         # "SBM(5000_.20)",
         # "SBM(5000_.30)",
         # "SBM(5000)",
-        "soc-facebook",         # 4k    / 87k   / connected
+        # "soc-facebook",         # 4k    / 87k   / connected
     ]
 
     graphs = [
@@ -451,12 +455,16 @@ def synthetic():
         #(nx.newman_watts_strogatz_graph, (1133, 7, 0.5)),
         #(nx.watts_strogatz_graph, (1133, 10, 0.5)),
         # 92-1
-        # (nx.gnp_random_graph, (2000, 0.5)),
-        # (nx.gnp_random_graph, (4000, 0.5)),
-        # (nx.gnp_random_graph, (5000, 0.5)),
+        (nx.gnp_random_graph, (2000, 0.5)),
+        (nx.gnp_random_graph, (4000, 0.5)),
+        (nx.gnp_random_graph, (5000, 0.5)),
         # (generate_sbm, (2000, .85, 5)),
         # (generate_sbm, (4000, .85, 5)),
-        (generate_sbm, (10000, .5, 10)),
+        # (generate_sbm, (6000, .5, 5)),
+        # (generate_sbm, (6000, .6, 5)),
+        # (generate_sbm, (6000, .7, 5)),
+        # (generate_sbm, (6000, .8, 5)),
+        # (generate_sbm, (6000, .9, 5)),
         # (generate_sbm, (5000, .4, 5)),
         # (generate_sbm, (5000, .35, 5)),
         # (generate_sbm, (5000, .65, 5)),
@@ -464,7 +472,7 @@ def synthetic():
         # (generate_sbm, (4000, .9, 5)),
         # (generate_sbm, (4000, .95, 5)),
 
-        (gen.loadnx, ('data/soc-facebook.txt',)),        
+        # (gen.loadnx, ('data/soc-facebook.txt',)),        
         
         #(nx.gnp_random_graph, (1133, 0.009)),
         #(nx.barabasi_albert_graph, (1133, 5)),
@@ -480,7 +488,7 @@ def synthetic():
 
     noises = [
         0.00,
-        #0.01,
+        # 0.01,
         #0.02,
         #0.03,
         #0.04,
