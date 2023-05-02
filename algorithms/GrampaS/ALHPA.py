@@ -15,8 +15,8 @@ import time
 
 def printLog(*args, **kwargs):
     print(*args, **kwargs)
-    # with open('/home/kb/Documents/Projects/Framework_GraphAlignment/logfiles/run_log.txt','a') as file:
-    #     print(*args, **kwargs, file=file)
+    with open('/home/kb/Documents/Projects/Framework_GraphAlignment/logfiles/run_log.txt','a') as file:
+        print(*args, **kwargs, file=file)
 
 
 def split_graph_hyper(graph, clustering, weighting_scheme='ncut', rcon=True): # POTENTIAL: add mem_eff=False parameter
@@ -147,16 +147,42 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
         # src_embedding = U[:, snz[:e_dim]]
         # tar_embedding = V[:, tnz[:e_dim]]
-
-        l, src_embedding = spectral_embedding(src_adj, n_components=25)
-        mu, tar_embedding = spectral_embedding(tar_adj, n_components=25)
+        
+        # l, src_embedding = spectral_embedding(src_adj, n_components=src_adj.shape[0])
+        # mu, tar_embedding = spectral_embedding(tar_adj, n_components=tar_adj.shape[0])
+        
+        l, src_embedding = spectral_embedding(src_adj, n_components=10)
+        mu, tar_embedding = spectral_embedding(tar_adj, n_components=10)
 
         # Find the number of clusters based on eigengap heuristics
-        diffs = np.array([abs(l[i-1] - l[i]) for i in range(1, len(l))])
-        i = 2
-        while diffs[i] < diffs.mean():
-            i += 1
-        K = i + 1
+        # diffs = np.array([abs(l[i-1] - l[i]) for i in range(1, len(l))])
+        # diffs = np.abs(np.diff(l))
+        # diffs[0] = diffs[1] = diffs[2] = diffs[3] = 0
+        # K = diffs.argmax()
+        # b = K.copy()
+        # for cand in np.argsort(diffs)[::-1][1:]:
+        #     if cand < K and cand > 3:
+        #         if abs(diffs[cand]-diffs[b]) < diffs[b]*.9:
+        #             K = cand
+
+        diffs = np.abs(np.diff(l))
+        diffs[0] = diffs[1] = diffs[2] = 0
+        K = diffs.argmax()
+        b = K.copy()
+        for cand in np.argsort(diffs)[::-1][1:]:
+            if cand < K and cand > 2:
+                if abs(diffs[cand]-diffs[b]) < diffs[b]*.05:
+                    K = cand
+                    break                    
+        # K = max(diffs.argmax()-1, 3)
+        # # inc = 1/len(l)
+        # # weights = np.linspace(1, len(diffs), num=len(diffs))
+        # # wdiffs = diffs
+        # i = 2
+        # # while (diffs[i] * weights[i]) < diffs.mean():
+        # while diffs[i] < diffs.mean():
+        #     i += 1
+        # K = i + 1
         # printLog(f'\nFound K={K} at position={pos}\ndiffs: {diffs}\nmean: {diffs.mean()}')
         printLog(f'\nFound K={K} at position={pos}')
         src_embedding = src_embedding.T[:K].T
@@ -202,10 +228,11 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         # 3. match cluster_graph.
         #printLog(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
 
-        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta# , ki=ki, lalpha=lalpha
+        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta, # ki=ki, lalpha=lalpha
                             )
         row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
         partition_alignment = list(zip(range(len(col)), col))
+
 
         cur_part_acc = []
         part_size_diff = {}

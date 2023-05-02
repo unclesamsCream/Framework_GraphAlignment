@@ -323,7 +323,7 @@ def real():
         # "bio-celegans",         # 453   / 2k    / connected
         "in-arenas",            # 1.1k  / 5.4k  / connected
         # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        # "inf-power",            # 4.9K  / 6.6K  / connected
+        "inf-power",            # 4.9K  / 6.6K  / connected
         # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
         #  #"CA-AstroPh",           # 18k   / 195k  / connected
@@ -430,19 +430,19 @@ def synthetic():
         # "watts_str",
         # "gnp",
         # "barabasi",
-        "ER(2000)",
-        "ER(4000)",
-        "ER(5000)",
+        # "ER(2000)",
+        # "ER(4000)",
+        # "ER(5000)",
         # "SBM(2000)",
         # "SBM(4000)",
-        # "SBM(6000k5_.5)",
+        "SBM(6000k5_.5)",
         # "SBM(6000k5_.6)",
         # "SBM(6000k5_.7)",
         # "SBM(6000k5_.8)",
         # "SBM(6000k5_.9)",
         # "SBM(5000_.20)",
         # "SBM(5000_.30)",
-        # "SBM(5000)",
+        "SBM(10000)",
         # "soc-facebook",         # 4k    / 87k   / connected
     ]
 
@@ -455,13 +455,14 @@ def synthetic():
         #(nx.newman_watts_strogatz_graph, (1133, 7, 0.5)),
         #(nx.watts_strogatz_graph, (1133, 10, 0.5)),
         # 92-1
-        (nx.gnp_random_graph, (2000, 0.5)),
-        (nx.gnp_random_graph, (4000, 0.5)),
-        (nx.gnp_random_graph, (5000, 0.5)),
+        # (nx.gnp_random_graph, (2000, 0.5)),
+        # (nx.gnp_random_graph, (4000, 0.5)),
+        # (nx.gnp_random_graph, (5000, 0.5)),
         # (generate_sbm, (2000, .85, 5)),
         # (generate_sbm, (4000, .85, 5)),
         # (generate_sbm, (6000, .5, 5)),
-        # (generate_sbm, (6000, .6, 5)),
+        (generate_sbm, (6000, .6, 5)),
+        # (generate_sbm, (10000, .6, 10)),
         # (generate_sbm, (6000, .7, 5)),
         # (generate_sbm, (6000, .8, 5)),
         # (generate_sbm, (6000, .9, 5)),
@@ -492,7 +493,7 @@ def synthetic():
         #0.02,
         #0.03,
         #0.04,
-        0.05,
+        # 0.05,
         #0.06,
         #0.07,
         #0.08,

@@ -265,8 +265,8 @@ def spectral_embedding(adjacency, *, n_components=25, random_state=None):
         laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
     )
     embedding = diffusion_map.T[n_components::-1]
-    l = l[1:n_components]
+    l = l[::-1]
     embedding = embedding / dd
     embedding = _deterministic_vector_sign_flip(embedding)
 
-    return l, embedding[1:n_components].T
+    return l[1:n_components], embedding[1:n_components].T
