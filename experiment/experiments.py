@@ -310,7 +310,7 @@ def real():
 
     run = [
         # 10,
-        # 12, 
+        12, 
         13,
     ]
     iters = 3
@@ -323,7 +323,7 @@ def real():
         # "bio-celegans",         # 453   / 2k    / connected
         "in-arenas",            # 1.1k  / 5.4k  / connected
         # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        "inf-power",            # 4.9K  / 6.6K  / connected
+        # "inf-power",            # 4.9K  / 6.6K  / connected
         # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
         #  #"CA-AstroPh",           # 18k   / 195k  / connected

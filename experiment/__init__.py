@@ -223,7 +223,7 @@ _algs = [
     (GraspB, _GRASPB_args, [-96], "GRASPB"),
     # (GrampaS, _GrampaS_args, [4], f'ALPHA(k={_GrampaS_args["k"]})'),
     (GrampaS, _GrampaS_args, [4], f'ALPHA'),
-    (ALHPA, _ALHPA_args, [4], "ALHPA"),
+    (ALHPA, _ALHPA_args, [4], "ALHPA (new)"),
 ]   
 
 _acc_names = [

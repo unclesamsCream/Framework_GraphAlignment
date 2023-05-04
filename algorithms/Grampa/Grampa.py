@@ -11,24 +11,29 @@ import scipy as sci
 from numpy import inf, nan
 import scipy.sparse as sps
 import math
-
 #from lapsolver import solve_dense
 import scipy as sci
 #from lapsolver import solve_dense
 def create_L(A, B, lalpha=1, mind=None, weighted=True):
-    n = A.shape[0]
-    m = B.shape[0]
-
+    # n = A.shape[0]
+    # m = B.shape[0]
+    n = len(A)
+    m = len(B)
+    # print(n == m)
     if lalpha is None:
         return sps.csr_matrix(np.ones((n, m)))
 
-    a = A.sum(1)
-    b = B.sum(1)
-    # print(a)
-    # print(b)
-    DegA=A.sum()
-    DegB=B.sum()
+    # a = A.sum(1)
+    # b = B.sum(1)
+    # # print(a)
+    # # print(b)
+    # DegA=A.sum()
+    # DegB=B.sum()
     # a_p = [(i, m[0,0]) for i, m in enumerate(a)]
+
+    a = A
+    b = B
+
     a_p = list(enumerate(a))
     a_p.sort(key=lambda x: x[1])
 
@@ -39,8 +44,8 @@ def create_L(A, B, lalpha=1, mind=None, weighted=True):
     ab_m = [0] * n
     s = 0
     e = floor(lalpha * log2(m))
-    a=a/DegA
-    b=b/DegB
+    # a=a/DegA
+    # b=b/DegB
     for ap in a_p:
         while(e < m and
               abs(b_p[e][1] - ap[1]) <= abs(b_p[s][1] - ap[1])
@@ -74,7 +79,7 @@ def create_L(A, B, lalpha=1, mind=None, weighted=True):
                 # print(len(li))
                 # print(len(lj))
                 # print(len(lj))
-
+    # print(sps.csr_matrix((lw, (li, lj)), shape=(n, m)))
     return sps.csr_matrix((lw, (li, lj)), shape=(n, m))
 
 def decompose_Tlaplacian(A,rA):
@@ -171,7 +176,7 @@ def main(data, eta,lalpha, lap, ki=False):
   #return rows, cols 
   return Xt
 
-def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None, ki=False, lalpha=10000):
+def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None, ki=False, lalpha=10000, init=None):
   """
   Summary or Description of the Function
 
@@ -206,18 +211,24 @@ def grampa(Src=None, Tar=None, eta=0.2, lap=False, decomp=None, ki=False, lalpha
       coeff = 1.0/((l.T - mu)**2 + eta**2)
       coeff = coeff * (U.T @ K @ V)
   else:
+      if init is not None:
+          s, t = init
+          L = create_L(s, t, lalpha, True).A.astype(np.float32)
+          K = (1 * L).astype(np.float32)*1
+      else:
+          K = np.ones((n,n))
       #Eq.4
       coeff = 1.0/((l.T - mu)**2 + eta**2)
       #Eq. 3
-      coeff = coeff * (U.T @ np.ones((n,n)) @ V)
+      coeff = coeff * (U.T @ K @ V)
 
   X = U @ coeff @ V.T  
 
-  #Eq.4
-  coeff = 1.0/((l.T - mu)**2 + eta**2)
-  #Eq. 3
-  coeff = coeff * (U.T @ np.ones((n,n)) @ V)
-  X = U @ coeff @ V.T
+  # #Eq.4
+  # coeff = 1.0/((l.T - mu)**2 + eta**2)
+  # #Eq. 3
+  # coeff = coeff * (U.T @ np.ones((n,n)) @ V)
+  # X = U @ coeff @ V.T
 
   Xt = X.T
   # Solve with linear assignment maximizing the similarity 
