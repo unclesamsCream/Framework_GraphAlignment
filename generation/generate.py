@@ -29,7 +29,7 @@ def refill_e(edges, n, amount):
 
 
 @ ex.capture
-def remove_e(edges, noise, no_disc=True, until_connected=True):
+def remove_e(edges, noise, no_disc=True, until_connected=False):
     ii = 0
     while True:
         ii += 1

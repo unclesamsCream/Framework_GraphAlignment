@@ -9,7 +9,6 @@ import itertools
 from sklearn.manifold import spectral_embedding as sk_specemb
 from lapjv import lapjv
 from sklearn.cluster import k_means, KMeans
-from scipy.spatial.distance import cdist
 from sklearn.exceptions import ConvergenceWarning
 import time
 import traceback
@@ -20,7 +19,7 @@ def printLog(*args, **kwargs):
         print(*args, **kwargs, file=file)
 
 
-def split_graph_hyper(graph, clustering, dists, weighting_scheme='ncut', rcon=True): # POTENTIAL: add mem_eff=False parameter
+def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for sil-comp))
     '''Split a graph into disjunct clusters and construct weighted graph where a node represents a cluster.
     
     Description:
@@ -49,19 +48,19 @@ def split_graph_hyper(graph, clustering, dists, weighting_scheme='ncut', rcon=Tr
     clusters = [[node for (node, c) in clustering.items() if c==i] for i in range(k)]
     cluster_sizes = np.array([len(c) for c in clusters])
 
-    sils = [[] for _ in range(k)]
-    dist_sorts = np.argsort(dists, axis=1)
-    for i in range(len(dists)):
-        #printLog(f'dists[i]={dists[i]}')
-        c = list(clustering.items())[i][1]
-        a = dists[i][c]
-        j = 0
-        while dist_sorts[i][j] == c:
-            j += 1
-        b = dists[i][dist_sorts[i][j]]
-        sils[c].append((b - a) / max(a, b))
+    # sils = [[] for _ in range(k)]
+    # dist_sorts = np.argsort(dists, axis=1)
+    # for i in range(len(dists)):
+    #     #printLog(f'dists[i]={dists[i]}')
+    #     c = list(clustering.items())[i][1]
+    #     a = dists[i][c]
+    #     j = 0
+    #     while dist_sorts[i][j] == c:
+    #         j += 1
+    #     b = dists[i][dist_sorts[i][j]]
+    #     sils[c].append((b - a) / max(a, b))
 
-    avg_sils = [(np.array(sil).mean()+1)/2 for sil in sils]
+    # avg_sils = [(np.array(sil).mean()+1)/2 for sil in sils]
     # subgraphs = [[] for _ in range(k)]
     p_G = nx.from_edgelist(graph)
     Gs = [p_G.subgraph(c).copy() for c in clusters]
@@ -92,7 +91,7 @@ def split_graph_hyper(graph, clustering, dists, weighting_scheme='ncut', rcon=Tr
             ncut = (cut / cluster_sizes[i]) + (cut / cluster_sizes[j])
             cluster_graph[i,j] = cluster_graph[j,i] = ncut
 
-    return cluster_graph, subgraphs, avg_sils # sils # cons # isolated
+    return cluster_graph, subgraphs, # avg_sils # sils # cons # isolated
 
 def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=None, ki=False, lalpha=10000):
     """
@@ -254,25 +253,21 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         # printLog('Splitting SRC')
         # src_cluster_graph, src_subgraphs, src_cons = split_graph_hyper(src_e, src_cluster, src_dists, weighting_scheme=weighting_scheme)
         # src_cluster_graph2, src_subgraphs2, src_cons2 = split_graph_hyper(src_e, src_cluster, src_dists, weighting_scheme='silcut')
-        src_cluster_graph, src_subgraphs, src_sils = split_graph_hyper(src_e, src_cluster, src_dists, weighting_scheme=weighting_scheme)
+        # src_cluster_graph, src_subgraphs, src_sils = split_graph_hyper(src_e, src_cluster, weighting_scheme=weighting_scheme)
+        src_cluster_graph, src_subgraphs = split_graph_hyper(src_e, src_cluster, weighting_scheme=weighting_scheme)
         # printLog('Splitting TAR')
         # tar_cluster_graph, tar_subgraphs, tar_cons = split_graph_hyper(tar_e, tar_cluster, tar_dists, weighting_scheme=weighting_scheme)
         # tar_cluster_graph2, tar_subgraphs2, tar_cons2 = split_graph_hyper(tar_e, tar_cluster, tar_dists, weighting_scheme='silcut')
-        tar_cluster_graph, tar_subgraphs, tar_sils = split_graph_hyper(tar_e, tar_cluster, tar_dists, weighting_scheme=weighting_scheme)
+        tar_cluster_graph, tar_subgraphs = split_graph_hyper(tar_e, tar_cluster, weighting_scheme=weighting_scheme)
         #printLog(f'src_cons: {[len(x) for x in src_cons]}\ntar_cons: {[len(x) for x in tar_cons]}')
 
         C_UPDATED = False
 
         # 3. match cluster_graph.
         #printLog(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
-        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta, init=(src_sils, tar_sils)) # ki=ki, lalpha=lalpha)
+        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta) # init=(src_sils, tar_sils ki=ki, lalpha=lalpha)
         row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
         partition_alignment = list(zip(range(len(col)), col))
-        # sim2 = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta) # ki=ki, lalpha=lalpha)
-        # row2, col2, _ = lapjv(-sim2) # row, col, _ = lapjv(-sim)
-        # partition_alignment2 = list(zip(range(len(col2)), col2))
-        # printLog(f'\ngrampa similarity of cluster graphs:\n{sim}')
-        # printLog(f'::::PARTITION ALIGNMENT OPTIONS::::\n\nncut:{partition_alignment}\nsilcut:{partition_alignment2}\n')
 
         cur_part_acc = []
         part_size_diff = {}
@@ -290,13 +285,16 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         for i in range(len(part_size_diff)):
             pp, size = list(part_size_diff.items())[i]
             if size > 0:
-                centroid = np.array([tar_centroids[pp[1]]])
                 # find candidate clusters from which to borrow nodes
                 candidate_clusters = [k for (k, v) in part_size_diff.items() if v < 0]
                 # list of indices of tar_nodes that correspond to candidate cluster c_i for all c_i candidate (target) clusters.
                 cand_idcs_list = [[i for i, v in enumerate(_tar_cluster) if v == j[1]] for j in candidate_clusters]
-                cand_points = [tar_embedding[idcs] for idcs in cand_idcs_list]
-                dists = [cdist(pts, centroid) for pts in cand_points]
+                # cand_idcs_list = np.array([i for arr in cand_idcs_list for i in arr])
+                # print(tar_dists.shape)
+                # print(cand_idcs_list.shape)
+                # cand_points = [tar_embedding[idcs] for idcs in cand_idcs_list]
+                # dists = [cdist(pts, centroid) for pts in cand_points]
+                dists = [tar_dists[idcs_list][:, pp[1]] for idcs_list in cand_idcs_list]
 
                 while size > 0:
                     best_dist = np.inf
@@ -327,7 +325,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         if C_UPDATED:
             tar_cluster = dict(zip(tar_nodes, _tar_cluster))
             tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
-            tar_cluster_graph, tar_subgraphs, _ = split_graph_hyper(tar_e, tar_cluster, tar_dists)
+            tar_cluster_graph, tar_subgraphs = split_graph_hyper(tar_e, tar_cluster)
             new_part_acc = []
             for (c_s, c_t) in partition_alignment:
                 # printLog(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
