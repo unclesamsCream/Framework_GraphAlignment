@@ -311,9 +311,10 @@ def real():
     run = [
         # 10,
         # 12, 
-        13,
+        # 13,
+        10,
     ]
-    iters = 3
+    iters = 1
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -326,16 +327,18 @@ def real():
         # "inf-power",            # 4.9K  / 6.6K  / connected
         # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
-         #"CA-AstroPh",           # 18k   / 195k  / connected
+         # "CA-AstroPh",           # 18k   / 195k  / connected
         # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
-        #  "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
-        #  "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
-        # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
-        "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
-        "soc-facebook",         # 4k    / 87k   / connected
+         # "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
+         # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
+        # # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
+        # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
+        # "soc-facebook",         # 4k    / 87k   / connected
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
         # "arenas-pgp",            # 10.68k / 24.316K / connected
-        # "fb-wosn"
+        # "socfb-BU10",
+        # "fb-wosn",
+        "socfb-Cornell5"
     ]
 
     graphs = rgraphs(graph_names)

@@ -179,7 +179,7 @@ _Grampa_args = {
 _GrampaS_args = {
     'eta': 0.2,
     'k': 10,
-    'rsc': 1250,
+    'rsc': 1500,
     'lap': True,
 }
 _ALHPA_args = {

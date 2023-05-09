@@ -9,7 +9,7 @@ def adj_from_edges(edge_list):
     node_map = {node: idx for idx, node in enumerate(unique)}
     idx_map = np.array(list(node_map.keys())) # Allows node name retrieval.
 
-    adj = np.zeros(shape=(N, N))
+    adj = np.zeros(shape=(N, N), dtype=np.float32)
     for (e1, e2) in edge_list:
         adj[node_map[e1]][node_map[e2]] += 1
         if e1 != e2:
@@ -266,6 +266,7 @@ def spectral_embedding(adjacency, *, n_components=25, random_state=None):
     )
     embedding = diffusion_map.T[n_components::-1]
     l = l[::-1]
+    print(l)
     embedding = embedding / dd
     embedding = _deterministic_vector_sign_flip(embedding)
 
