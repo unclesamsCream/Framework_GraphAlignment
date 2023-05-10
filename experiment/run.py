@@ -257,6 +257,8 @@ def run_algs(g, algs, _log, _run, prep=False, circular=False):
 
     for alg in algs:
         time1, res2 = run_alg(alg, data, Gt)
+        with np.printoptions(suppress=True, precision=4):
+            print((f'\n[{alg[3]}] -- Accuracy: {res2}, time: {time1.sum()}\n'))
         time2.append(time1)
         res3.append(res2)
 

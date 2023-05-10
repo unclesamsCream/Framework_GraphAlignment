@@ -266,7 +266,7 @@ def spectral_embedding(adjacency, *, n_components=25, random_state=None):
     )
     embedding = diffusion_map.T[n_components::-1]
     l = l[::-1]
-    print(l)
+    print(f'\nlambdas:\n{l}')
     embedding = embedding / dd
     embedding = _deterministic_vector_sign_flip(embedding)
 

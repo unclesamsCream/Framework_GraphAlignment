@@ -38,6 +38,7 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
     '''
     k = np.max(list(clustering.values())) + 1 # Assuming input format is respected
     # new graph of clusters represented by its adjacency matrix
+    cut_graph = np.zeros(shape=(k, k), dtype=int)
     cluster_graph = np.zeros(shape=(k, k))
     clusters = [[node for (node, c) in clustering.items() if c==i] for i in range(k)]
   
@@ -57,9 +58,9 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
     # avg_sils = [(np.array(sil).mean()+1)/2 for sil in sils]
     # subgraphs = [[] for _ in range(k)]
     p_G = nx.from_edgelist(graph)
-    Gs = [p_G.subgraph(c).copy() for c in clusters]
+    Gs = [p_G.subgraph(max(nx.connected_components(p_G.subgraph(c)), key=len)) for c in clusters]
     subgraphs = [np.array(G.edges) for G in Gs]
-    cons = [list(nx.connected_components(G)) for G in Gs]
+    cons = [sorted(list(nx.connected_components(G)), key=len) for G in Gs]
 
     # Build hyper graph
     for (e, f) in list(graph):
@@ -68,8 +69,8 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
         if c1 != c2:
             if weighting_scheme in ['cut', 'rcut', 'ncut']:
                 # add edge in cluster graph adjacency matrix
-                cluster_graph[c1, c2] += 1
-                cluster_graph[c2, c1] += 1
+                cut_graph[c1, c2] += 1
+                cut_graph[c2, c1] += 1
 
     matrix_iterator = list(itertools.combinations(range(k), r=2))
                 
@@ -79,20 +80,28 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
         for i in range(k):
             for j in range(k):
                 if i != j:
-                    cluster_graph[i, j] = cluster_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / len(np.unique(graph))
+                    cut_graph[i, j] = cut_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / len(np.unique(graph))
 
     if weighting_scheme == 'rcut':
         cluster_sizes = np.array([len(c) for c in clusters])
         for (i, j) in matrix_iterator:
-            cut = cluster_graph[i,j]
+            cut = cut_graph[i,j]
             rcut = (cut / cluster_sizes[i]) + (cut / cluster_sizes[j])
-            cluster_graph[i,j] = cluster_graph[j,i] = rcut
+            cut_graph[i,j] = cut_graph[j,i] = rcut
 
+    with np.printoptions(linewidth=np.nan, precision=4):
+        print(cut_graph)
     if weighting_scheme == 'ncut':
         for (i, j) in matrix_iterator:
-            cut = cluster_graph[i,j]
-            ncut = (cut / len(subgraphs[i])) + (cut / len(subgraphs[j]))
+            vol_i = len(subgraphs[i]) + sum(cut_graph[i, :])
+            vol_j = len(subgraphs[j]) + sum(cut_graph[j, :])
+            # print(f'\n\n{vol_i, len(subgraphs[i])}\n{vol_j, len(subgraphs[j])}\n\n')
+            cut = cut_graph[i,j]
+            ncut = (cut / vol_i) + (cut / vol_j)
             cluster_graph[i,j] = cluster_graph[j,i] = ncut
+    with np.printoptions(linewidth=np.nan, precision=4):
+        print(f'new cg:\n{cluster_graph}')
+
     return cluster_graph, subgraphs, # avg_sils # sils # cons # isolated
 
 def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=None, ki=False, lalpha=10000):
@@ -110,8 +119,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
     """
 
     n = len(np.unique(src_graph))
-    if rsc == 0: rsc = np.sqrt(n)
-
+    if rsc == 0: rsc = .1*n
     eta = 0.2
 
     matching = -1 * np.ones(shape=(n, ), dtype=int)
@@ -181,8 +189,13 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         #             K = cand
 
         diffs = np.abs(np.diff(l))
+        diffs_ = np.abs(np.diff(mu))
+        diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0
         # diffs[0] = diffs[1] = 0
         K = diffs.argmax() + 1
+        K_ = diffs_.argmax() + 1
+        print(f'diffs:\n{diffs}\n{diffs_}\n')
+        print(f'K:{K}, K_: {K_}')
         # b = K.copy()
         # for cand in np.argsort(diffs)[::-1][1:]:
         #     if cand < K and cand > 2:
@@ -190,7 +203,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         #             K = cand
         #             break                    
         # K = K + 1
-        K = max(K, 3)
+        K = max(K, K_, 3)
         # # inc = 1/len(l)
         # # weights = np.linspace(1, len(diffs), num=len(diffs))
         # # wdiffs = diffs
@@ -281,8 +294,17 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         C_UPDATED = False
 
         # 3. match cluster_graph.
-        #print(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
-        sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta, lap=True) # init=(src_sils, tar_sils ki=ki, lalpha=lalpha)
+        print(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
+        try:
+            sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta, lap=True) # init=(src_sils, tar_sils ki=ki, lalpha=lalpha)
+        except Exception as e:
+            traceback.print_exc()
+            print(repr(e))
+            print('\n\n!!!!!!!!!!!HYPER ERROR!!!!!!!!!!!\n\n')
+
+            # match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
+            return
+
         row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
         partition_alignment = list(zip(range(len(col)), col))
         cur_part_acc = []
