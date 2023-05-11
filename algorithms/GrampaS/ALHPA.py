@@ -173,8 +173,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         
         # l, src_embedding = spectral_embedding(src_adj, n_components=src_adj.shape[0])
         # mu, tar_embedding = spectral_embedding(tar_adj, n_components=tar_adj.shape[0])
-        
+        print('embedding src graph...')
         l, src_embedding = spectral_embedding(src_adj, n_components=10)
+        print('embedding tar graph...')
         mu, tar_embedding = spectral_embedding(tar_adj, n_components=10)
 
         # Find the number of clusters based on eigengap heuristics
@@ -276,8 +277,10 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         src_cluster = dict(zip(src_nodes, _src_cluster))
         tar_cluster = dict(zip(tar_nodes, _tar_cluster))
         src_nodes_by_cluster = [[k for k,v in src_cluster.items() if v == i] for i in range(K)]
+        src_cluster_sizes = [len(x) for x in src_nodes_by_cluster]
         tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
-        print(f'\ncluster numbers: src:{[len(x) for x in src_nodes_by_cluster]}, tar:{[len(x) for x in tar_nodes_by_cluster]}\n')
+        tar_cluster_sizes = [len(x) for x in tar_nodes_by_cluster]
+        print(f'\ncluster numbers: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
 
         # 2. split graphs (src, tar) according to cluster.
         # print('Splitting SRC')
@@ -297,6 +300,15 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         print(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
         try:
             sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta, lap=True) # init=(src_sils, tar_sils ki=ki, lalpha=lalpha)
+            print(f'\nsim:\n{sim}')
+            W = np.zeros((K,K)) # weights
+            for i in range(K):
+                for j in range(K):
+                    if j >= i: # Construct weights based cluster cardinality, such that different sizes decreases similarity.
+                        W[i,j] = W[j,i] = min(min(src_cluster_sizes[i], tar_cluster_sizes[j]) / max(src_cluster_sizes[i], tar_cluster_sizes[j]), 0.99) # min(0.99) to avoid division by zero.
+            W = 1 - W
+            sim = sim / W
+            print(f'\nweighted sim:\n{sim}')
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
@@ -309,7 +321,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         partition_alignment = list(zip(range(len(col)), col))
         cur_part_acc = []
         part_size_diff = {}
-        print(sim)
+
         for (c_s, c_t) in partition_alignment:
             # print(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
             part_size_diff[(c_s, c_t)] = len(src_nodes_by_cluster[c_s]) - len(tar_nodes_by_cluster[c_t])
@@ -375,7 +387,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
                 new_part_acc.append(acc_count.sum())
 
             new_part_acc = np.array(new_part_acc)
-            print(f'\ncluster numbers after: src:{[len(x) for x in src_nodes_by_cluster]}, tar:{[len(x) for x in tar_nodes_by_cluster]}\n')
+            print(f'\ncluster numbers after: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
             print(f'\n cluster acc before: {cur_part_acc}, after: {new_part_acc}')
             print(part_size_diff)
             readjustment_accs.append((new_part_acc-cur_part_acc).sum())
