@@ -311,11 +311,11 @@ def real():
 
     run = [
         # 10,
-        12, 
+        # 12, 
         13,
         # 10,
     ]
-    iters = 1
+    iters = 2
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -334,12 +334,12 @@ def real():
          # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
         # # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
         # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
-        "soc-facebook",         # 4k    / 87k   / connected
+        # "soc-facebook",         # 4k    / 87k   / connected
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
         # "arenas-pgp",            # 10.68k / 24.316K / connected
         # "socfb-BU10",
         # "fb-wosn",
-        # "socfb-Cornell5"
+        "socfb-Cornell5"
     ]
 
     graphs = rgraphs(graph_names)
@@ -350,10 +350,10 @@ def real():
         # 0.02,
         # 0.03,
         # 0.04,
-        # 0.05,
+        0.05,
         # 0.00,
         # 0.05,
-        # 0.10,
+        0.10,
         # 0.15,
         # 0.20,
         #0.25,
@@ -448,7 +448,7 @@ def synthetic():
         # "SBM(6000k5_.9)",
         # "SBM(5000_.20)",
         # "SBM(5000_.30)",
-        "SBM(10000)",
+        # "SBM(10000)",
         # "soc-facebook",         # 4k    / 87k   / connected
     ]
 
@@ -468,7 +468,7 @@ def synthetic():
         # (generate_sbm, (4000, .85, 5)),
         # (generate_sbm, (6000, .5, 5)),
         (generate_sbm, (6000, .6, 5)),
-        # (generate_sbm, (10000, .6, 10)),
+        # (generate_sbm, (10000, .6, 5)),
         # (generate_sbm, (6000, .7, 5)),
         # (generate_sbm, (6000, .8, 5)),
         # (generate_sbm, (6000, .9, 5)),
@@ -499,7 +499,7 @@ def synthetic():
         #0.02,
         #0.03,
         #0.04,
-        # 0.05,
+        0.05,
         #0.06,
         #0.07,
         #0.08,
