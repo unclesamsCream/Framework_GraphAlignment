@@ -412,7 +412,7 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
         for i in range(k):
             for j in range(k):
                 if i != j:
-                    cut_graph[i, j] = cut_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / len(np.unique(graph))
+                    cluster_graph[i, j] = cluster_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / len(np.unique(graph))
 
     if weighting_scheme == 'rcut':
         cluster_sizes = np.array([len(c) for c in clusters])
@@ -428,8 +428,8 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
             vol_i = len(subgraphs[i]) + sum(cut_graph[i, :])
             vol_j = len(subgraphs[j]) + sum(cut_graph[j, :])
             # print(f'\n\n{vol_i, len(subgraphs[i])}\n{vol_j, len(subgraphs[j])}\n\n')
-            cut = cut_graph[i,j]
-            ncut = (cut / vol_i) + (cut / vol_j)
+            # cut = cut_graph[i,j]
+            ncut = (sum(cut_graph[i, :]) / vol_i) + (sum(cut_graph[j,:]) / vol_j)
             cluster_graph[i,j] = cluster_graph[j,i] = ncut
     with np.printoptions(linewidth=np.nan, precision=4):
         print(f'new cg:\n{cluster_graph}')
@@ -493,6 +493,17 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
     def cluster_recurse(src_e, tar_e, pos=[(0,0)]):
         pos = pos.copy()
+        G_s = nx.from_edgelist(src_e)
+        con_gs = list(nx.connected_components(G_s))
+        # print(list(con_gs))
+        print(f'\nconnected components in src graph: {[len(x) for x in con_gs]}')
+        src_e = G_s.subgraph(max(con_gs, key=len)).edges
+        del G_s
+        G_t = nx.from_edgelist(tar_e)
+        con_gt = list(nx.connected_components(G_t))
+        print(f'\nconnected components in tar graph: {[len(x) for x in con_gt]}')
+        tar_e = G_t.subgraph(max(con_gt, key=len)).edges
+
         src_adj, src_nodes = adj_from_edges(src_e)
         tar_adj, tar_nodes = adj_from_edges(tar_e)
         
@@ -523,10 +534,10 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
         diffs = np.abs(np.diff(l))
         diffs_ = np.abs(np.diff(mu))
-        diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0
+        diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0 # 
         # diffs[0] = diffs[1] = 0
-        K = diffs.argmax() + 1
-        K_ = diffs_.argmax() + 1
+        K = diffs.argmax() + 2 # +1 due to diff[i] being [i+1] in original array. +1 due to eigengap heuristic.
+        K_ = diffs_.argmax() + 2
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
         # b = K.copy()
@@ -632,13 +643,16 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         print(f'\ncluster graphs (src, tar)\n{src_cluster_graph}\n{tar_cluster_graph}')
         try:
             sim = Grampa.grampa(src_cluster_graph, tar_cluster_graph, eta, lap=True) # init=(src_sils, tar_sils ki=ki, lalpha=lalpha)
+            print(f'\nsim:\n{sim}')
             # W = np.zeros((K,K)) # weights
             # for i in range(K):
             #     for j in range(K):
             #         if j >= i: # Construct weights based cluster cardinality, such that different sizes decreases similarity.
             #             W[i,j] = W[j,i] = min(src_cluster_sizes[i], tar_cluster_sizes[j]) / max(src_cluster_sizes[i], tar_cluster_sizes[j])
-            # W = 1 - W
-            # sim = sim / W
+            # # W = 1 - W
+            # # sim = sim / W
+            # sim = sim * W
+            # print(f'\nweighted sim:\n{sim}')
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
@@ -651,7 +665,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         partition_alignment = list(zip(range(len(col)), col))
         cur_part_acc = []
         part_size_diff = {}
-        print(sim)
+
         for (c_s, c_t) in partition_alignment:
             # print(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
             part_size_diff[(c_s, c_t)] = len(src_nodes_by_cluster[c_s]) - len(tar_nodes_by_cluster[c_t])
