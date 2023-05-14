@@ -126,7 +126,8 @@ def alggs(tmp):
 def socials_small():
 
     tmp = [
-        13,  
+        13,
+        [
             {'rsc': x} for x in [1250]
         ]
     ]
@@ -167,7 +168,8 @@ def tuning():
         # }
         [
             # {'k': x} for x in [3, 5, 10, 15, 20]
-            {'rsc': x} for x in [2500, 4000, 6000, 8000]
+            # {'rsc': x} for x in [2500, 4000, 6000, 8000]
+            {'weighting_scheme': x} for x in ['size', 'rcut', 'ncut']
         ]
     ]
 
@@ -175,12 +177,12 @@ def tuning():
 
     run = list(range(len(tmp[1])))
 
-    iters = 10
+    iters = 30
 
     graph_names = [               # n     / e
         "socfb-Cornell5",         # 18.6K / 79K / connected,
-        "socfb-BU10"              # 19.6K / 637.5K / connected
-        "fb-wosn",                # 63.4K / 817K / connected
+        # "socfb-BU10"              # 19.6K / 637.5K / connected
+        # "fb-wosn",                # 63.4K / 817K / connected
     ]
 
     graphs = rgraphs(graph_names)
