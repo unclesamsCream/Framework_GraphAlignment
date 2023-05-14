@@ -20,17 +20,19 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
         - Removes all edges between clusters.
         - Adds a node per cluster to a new graph.
         - Adds edges between new nodes with a weight corresponding to the amount of edges removed between them.
+        - 
 
     Parameters:
         graph (np.array): nxn adjacency matrix
 
         clustering: A clustering for the input graph.
             /format/ Clustering is a dict {node (int): cluster (int)} containing the input graph clustering.
-                     Clustering values has to be consecutive, i.e. >>>np.unique(clustering.valuess()) yields [0,1,2,...,k-1]
+                     Clustering values has to be consecutive, i.e. >>>np.unique(clustering.values()) yields [0,1,2,...,k-1]
 
         weighting_scheme: The weighting scheme to be used. Current implementation allows for:
-                          'cut': based on number of connections between clusters.
-                          ###NOT IMPLEMENTED###'size': based on size of cluster relative to total number of nodes
+                          'size': based on size of cluster relative to total number of nodes
+                          'rcut': based on the ratio cut separating two clusters.
+                          'ncut': based on the normalised cut separating two clusters.
 
     Returns:
         cluster_graph: (kxk np.array) A graph constructed as per above description.
@@ -41,53 +43,39 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
     cut_graph = np.zeros(shape=(k, k), dtype=int)
     cluster_graph = np.zeros(shape=(k, k))
     clusters = [[node for (node, c) in clustering.items() if c==i] for i in range(k)]
-  
 
-    # sils = [[] for _ in range(k)]
-    # dist_sorts = np.argsort(dists, axis=1)
-    # for i in range(len(dists)):
-    #     #print(f'dists[i]={dists[i]}')
-    #     c = list(clustering.items())[i][1]
-    #     a = dists[i][c]
-    #     j = 0
-    #     while dist_sorts[i][j] == c:
-    #         j += 1
-    #     b = dists[i][dist_sorts[i][j]]
-    #     sils[c].append((b - a) / max(a, b))
-
-    # avg_sils = [(np.array(sil).mean()+1)/2 for sil in sils]
-    # subgraphs = [[] for _ in range(k)]
     p_G = nx.from_edgelist(graph)
     Gs = [p_G.subgraph(max(nx.connected_components(p_G.subgraph(c)), key=len)) for c in clusters]
     subgraphs = [np.array(G.edges) for G in Gs]
-    cons = [sorted(list(nx.connected_components(G)), key=len) for G in Gs]
+    # cons = [sorted(list(nx.connected_components(G)), key=len) for G in Gs]
 
     # Build hyper graph
     for (e, f) in list(graph):
         c1 = clustering[e]
         c2 = clustering[f]
         if c1 != c2:
-            if weighting_scheme in ['cut', 'rcut', 'ncut']:
+            # if weighting_scheme in ['cut', 'rcut', 'ncut']:
                 # add edge in cluster graph adjacency matrix
-                cut_graph[c1, c2] += 1
-                cut_graph[c2, c1] += 1
-
+            cut_graph[c1, c2] += 1
+            cut_graph[c2, c1] += 1
+    print(cut_graph)
     matrix_iterator = list(itertools.combinations(range(k), r=2))
-                
+    if weighting_scheme == None:
+        cluster_graph = cut_graph.copy()
     if weighting_scheme == 'size':
+        V_ = len(p_G.nodes)
         cluster_sizes = np.array([len(c) for c in clusters])
         # e_AB = max(|A|, |B|) / |V|
         for i in range(k):
             for j in range(k):
                 if i != j:
-                    cluster_graph[i, j] = cluster_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / len(np.unique(graph))
+                    cluster_graph[i, j] = cluster_graph[j, i] = max(cluster_sizes[i], cluster_sizes[j]) / V_
 
     if weighting_scheme == 'rcut':
         cluster_sizes = np.array([len(c) for c in clusters])
         for (i, j) in matrix_iterator:
-            cut = cut_graph[i,j]
-            rcut = (cut / cluster_sizes[i]) + (cut / cluster_sizes[j])
-            cut_graph[i,j] = cut_graph[j,i] = rcut
+            rcut = (cut_graph[i,j] / cluster_sizes[i]) + (cut_graph[i,j] / cluster_sizes[j])
+            cluster_graph[i,j] = cluster_graph[j,i] = rcut
 
     with np.printoptions(linewidth=np.nan, precision=4):
         print(cut_graph)
@@ -95,9 +83,8 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
         for (i, j) in matrix_iterator:
             vol_i = len(subgraphs[i]) + sum(cut_graph[i, :])
             vol_j = len(subgraphs[j]) + sum(cut_graph[j, :])
-            # print(f'\n\n{vol_i, len(subgraphs[i])}\n{vol_j, len(subgraphs[j])}\n\n')
-            # cut = cut_graph[i,j]
-            ncut = (sum(cut_graph[i, :]) / vol_i) + (sum(cut_graph[j,:]) / vol_j)
+            # sum_i^k (cut(A_i,\hat{A_i}) / Vol(A_i)
+            ncut = (sum(cut_graph[i, :]) / vol_i) + (sum(cut_graph[j,:]) / vol_j) 
             cluster_graph[i,j] = cluster_graph[j,i] = ncut
     with np.printoptions(linewidth=np.nan, precision=4):
         print(f'new cg:\n{cluster_graph}')
@@ -175,61 +162,22 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         src_adj, src_nodes = adj_from_edges(src_e)
         tar_adj, tar_nodes = adj_from_edges(tar_e)
         
-        #### 1. Spectrally embed graphs into 1 dimension.
-        # l, U, snz = decompose_spectral(src_adj)
-        # mu, V, tnz = decompose_spectral(tar_adj)
-
-        # src_embedding = U[:, snz[:e_dim]]
-        # tar_embedding = V[:, tnz[:e_dim]]
-        
-        # l, src_embedding = spectral_embedding(src_adj, n_components=src_adj.shape[0])
-        # mu, tar_embedding = spectral_embedding(tar_adj, n_components=tar_adj.shape[0])
         print('embedding src graph...')
         l, src_embedding = spectral_embedding(src_adj, n_components=10)
         print('embedding tar graph...')
         mu, tar_embedding = spectral_embedding(tar_adj, n_components=10)
 
-        # Find the number of clusters based on eigengap heuristics
-        # diffs = np.array([abs(l[i-1] - l[i]) for i in range(1, len(l))])
-        # diffs = np.abs(np.diff(l))
-        # diffs[0] = diffs[1] = diffs[2] = diffs[3] = 0
-        # K = diffs.argmax()
-        # b = K.copy()
-        # for cand in np.argsort(diffs)[::-1][1:]:
-        #     if cand < K and cand > 3:
-        #         if abs(diffs[cand]-diffs[b]) < diffs[b]*.9:
-        #             K = cand
-
         diffs = np.abs(np.diff(l))
         diffs_ = np.abs(np.diff(mu))
-        diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0 # 
-        # diffs[0] = diffs[1] = 0
-        K = diffs.argmax() + 2 # +1 due to diff[i] being [i+1] in original array. +1 due to eigengap heuristic.
+        diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0 # We do not wish to find k<3
+        K = diffs.argmax() + 2 # +1 due to diff[i] being [i+1] in original array. +1 as eigengap heuristic includes the l=0 vector.
         K_ = diffs_.argmax() + 2
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
-        # b = K.copy()
-        # for cand in np.argsort(diffs)[::-1][1:]:
-        #     if cand < K and cand > 2:
-        #         if abs(diffs[cand]-diffs[b]) < diffs[b]*.05:
-        #             K = cand
-        #             break                    
-        # K = K + 1
-        K = max(K, K_, 3)
-        # # inc = 1/len(l)
-        # # weights = np.linspace(1, len(diffs), num=len(diffs))
-        # # wdiffs = diffs
-        # i = 2
-        # # while (diffs[i] * weights[i]) < diffs.mean():
-        # while diffs[i] < diffs.mean():
-        #     i += 1
-        # K = i + 1
-        # print(f'\nFound K={K} at position={pos}\ndiffs: {diffs}\nmean: {diffs.mean()}')
+        # K = max(K, K_, 3)
         print(f'\nFound K={K} at position={pos}')
         src_embedding = src_embedding.T[:K].T
         tar_embedding = tar_embedding.T[:K].T
-        # src_embedding2 = src_embedding.T[:2].T
-        # tar_embedding2 = tar_embedding.T[:2].T        
 
         # Compute clusters on embedded data with kmeans and lloyd's algorithm
         warnings.simplefilter('error', category=ConvergenceWarning)
@@ -237,51 +185,28 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             print('computing k-means (src graph)')
             kmeans = KMeans(n_clusters=K, init='random', n_init=10).fit(src_embedding)
             src_centroids = kmeans.cluster_centers_
-            # print(src_centroids)
             _src_cluster = kmeans.labels_
-            # print(_src_cluster)
             src_dists = kmeans.transform(src_embedding)
-            # print('2nd kmean...')
-            # kmeans2 = KMeans(n_clusters=2, init='random', n_init=10).fit(src_embedding2)
-            # src_cents2 = kmeans2.cluster_centers_
-            # _src_cluster2 = kmeans2.labels_
-            # print(src_dists.shape)
-            # print(src_dists)
-            # print(f' doing the thing: {np.all(_src_cluster == np.argsort(src_dists, axis=1)[:,0])}')
-            # src_centroids, _src_cluster, _ = k_means(src_embedding, n_clusters=K, n_init=10)
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
             print(f'Troublesome graph!!!\n Matching parent graph using GRAMPA')
-            # match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes), decomp=[(l, U), (mu, V)])
             match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
         try:
             print('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
             kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding)
-            # kmeans = KMeans(n_clusters=K, init='random', n_init=10).fit(tar_embedding)
             tar_centroids = kmeans.cluster_centers_
             _tar_cluster = kmeans.labels_
             tar_dists = kmeans.transform(tar_embedding)
-            # print('2nd kmean...')
-            # kmeans2 = KMeans(n_clusters=2, init=src_cents2, n_init=1).fit(tar_embedding2)
-            # _tar_cluster2 = kmeans2.labels_
-            # print(f' doing the thing: {np.all(_tar_cluster == np.argsort(tar_dists, axis=1)[:,0])}')
-            # tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, init=src_centroids, n_init=1)
-            # tar_centroids, _tar_cluster, _ = k_means(tar_embedding, n_clusters=K, n_init=10)            
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
             print(f'Troublesome graph!!!\n Matching parent graph using GRAMPA')
-            # match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes), decomp=[(l, U), (mu, V)])
+
             match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
-        # k2src1 = len(_src_cluster2.nonzero()[0])
-        # k2src0 = len(_src_cluster2) - k2src1
-        # k2tar1 = len(_tar_cluster2.nonzero()[0])
-        # k2tar0 = len(_tar_cluster2) - k2tar1
-        # print(f'K=2 clusters numbers --- src: {(k2src0, k2src1)}, tar: {(k2tar0, k2tar1)}')
         #print(f'src_centroids:\n{src_centroids}')
         #print(f'tar_centroids:\n{tar_centroids}')
 
@@ -295,15 +220,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
         # 2. split graphs (src, tar) according to cluster.
         # print('Splitting SRC')
-        # src_cluster_graph, src_subgraphs, src_cons = split_graph_hyper(src_e, src_cluster, src_dists, weighting_scheme=weighting_scheme)
-        # src_cluster_graph2, src_subgraphs2, src_cons2 = split_graph_hyper(src_e, src_cluster, src_dists, weighting_scheme='silcut')
-        # src_cluster_graph, src_subgraphs, src_sils = split_graph_hyper(src_e, src_cluster, weighting_scheme=weighting_scheme)
         src_cluster_graph, src_subgraphs = split_graph_hyper(src_e, src_cluster, weighting_scheme=weighting_scheme)
         # print('Splitting TAR')
-        # tar_cluster_graph, tar_subgraphs, tar_cons = split_graph_hyper(tar_e, tar_cluster, tar_dists, weighting_scheme=weighting_scheme)
-        # tar_cluster_graph2, tar_subgraphs2, tar_cons2 = split_graph_hyper(tar_e, tar_cluster, tar_dists, weighting_scheme='silcut')
         tar_cluster_graph, tar_subgraphs = split_graph_hyper(tar_e, tar_cluster, weighting_scheme=weighting_scheme)
-        #print(f'src_cons: {[len(x) for x in src_cons]}\ntar_cons: {[len(x) for x in tar_cons]}')
 
         C_UPDATED = False
 
@@ -325,8 +244,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             traceback.print_exc()
             print(repr(e))
             print('\n\n!!!!!!!!!!!HYPER ERROR!!!!!!!!!!!\n\n')
-
-            # match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
+            match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
 
         row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
@@ -345,18 +263,13 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
         # for each positive entry in part_size_diff borrow from negative entries
         # for (pp, size) in part_size_diff.items():
-        for i in range(len(part_size_diff)):
-            pp, size = list(part_size_diff.items())[i]
+        for i, (pp, size) in enumerate(part_size_diff.items()):
             if size > 0:
                 # find candidate clusters from which to borrow nodes
                 candidate_clusters = [k for (k, v) in part_size_diff.items() if v < 0]
                 # list of indices of tar_nodes that correspond to candidate cluster c_i for all c_i candidate (target) clusters.
                 cand_idcs_list = [[i for i, v in enumerate(_tar_cluster) if v == j[1]] for j in candidate_clusters]
-                # cand_idcs_list = np.array([i for arr in cand_idcs_list for i in arr])
-                # print(tar_dists.shape)
-                # print(cand_idcs_list.shape)
-                # cand_points = [tar_embedding[idcs] for idcs in cand_idcs_list]
-                # dists = [cdist(pts, centroid) for pts in cand_points]
+                # distance to current
                 dists = [tar_dists[idcs_list][:, pp[1]] for idcs_list in cand_idcs_list]
 
                 while size > 0:
@@ -436,27 +349,16 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
     return matching, pos_res, np.array(readjustment_accs)
 
-def main(data, eta, rsc, lap, ki, lalpha):
-    print(f'\n\n\nstarting run:\nargs: (, eta, rsc, lap, ki, lalpha)={(eta, rsc, lap, ki, lalpha)}')
+def main(data, eta, rsc, lap, ki, lalpha, weighting_scheme):
+    print(f'\n\n\nstarting run:\nargs: (, eta, rsc, lap, ki, lalpha, weighting_scheme)={(eta, rsc, lap, ki, lalpha, weighting_scheme)}')
     Src = data['src_e']
     Tar = data['tar_e']
     gt = data["gt"]
 
     n = Src.shape[0]
     s = time.time()
-    matching, pos, readj_accs = alhpa(Src, Tar, rsc=rsc, weighting_scheme='ncut', lap=lap, gt=gt, ki=ki, lalpha=lalpha)
-    print(f'Produced matching in time: {time.time()-s}')
+    matching, pos, readj_accs = alhpa(Src, Tar, rsc=rsc, weighting_scheme=weighting_scheme, lap=lap, gt=gt, ki=ki, lalpha=lalpha)
     print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
-
-    ma, mb = matching
-    gmb, gmb1 = gt
-    gmab = np.arange(gmb.size)
-    gmab[ma] = mb
-    gacc = np.mean(gmb == gmab)
-
-    mab = gmb[ma]
-    acc = np.mean(mb == mab)
-    print(f'\nAccuracy: {acc}\n')
 
     for k, v in pos.items():
         print(f'{k}:\n{v}')

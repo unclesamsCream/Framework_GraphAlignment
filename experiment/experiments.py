@@ -123,6 +123,38 @@ def alggs(tmp):
 
 
 @ex.named_config
+def socials_small():
+
+    tmp = [
+        13,  
+            {'rsc': x} for x in [1250]
+        ]
+    ]
+
+    _algs[:] = alggs(tmp)
+
+    run = list(range(len(tmp[1])))
+
+    iters = 10
+
+    graph_names = [             # n     / e
+        "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
+        "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
+        "socfb-Haverford76",    # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
+        "soc-facebook",         # 4k    / 87k   / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+    ]
+
+@ex.named_config
 def tuning():
 
     tmp = [
@@ -135,7 +167,7 @@ def tuning():
         # }
         [
             # {'k': x} for x in [3, 5, 10, 15, 20]
-            {'rsc': x} for x in [2500, 3000, 3500]
+            {'rsc': x} for x in [2500, 4000, 6000, 8000]
         ]
     ]
 
@@ -143,36 +175,20 @@ def tuning():
 
     run = list(range(len(tmp[1])))
 
-    iters = 5
+    iters = 10
 
-    graph_names = [             # n     / e
-        # "ca-netscience",       # 379   / 914   / connected
-        #n "voles",
-        # "high-school",
-        # "yeast"
-        # "bio-celegans",         # 453   / 2k    / connected
-        # "in-arenas",            # 1.1k  / 5.4k  / connected
-        # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        # "inf-power",            # 4.9K  / 6.6K  / connected
-        # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
-        # "bio-dmela",            # 7.4k  / 25.6k / connected
-       #  #"CA-AstroPh",           # 18k   / 195k  / connected
-       # #  "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
-       # #  "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
-       # #  "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
-        # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
-       # # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
-        # "soc-facebook",         # 4k    / 87k   / connected
-       #  "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
-        "socfb-Cornell5"
+    graph_names = [               # n     / e
+        "socfb-Cornell5",         # 18.6K / 79K / connected,
+        "socfb-BU10"              # 19.6K / 637.5K / connected
+        "fb-wosn",                # 63.4K / 817K / connected
     ]
 
     graphs = rgraphs(graph_names)
 
     noises = [
         0.00,
-        0.05,
-        0.10,
+        # 0.05,
+        # 0.10,
     ]
 
     # s_trans = (0, 2, 1, 3)
@@ -334,12 +350,13 @@ def real():
          # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
         # # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
         # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
-        # "soc-facebook",         # 4k    / 87k   / connected
+        "soc-facebook",         # 4k    / 87k   / connected
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
         # "arenas-pgp",            # 10.68k / 24.316K / connected
-        # "socfb-BU10",
-        # "fb-wosn",
-        "socfb-Cornell5"
+        # "socfb-Cornell5",         # 18.6K / 79K / connected,
+        # "socfb-BU10"              # 19.6K / 637.5K / connected
+        # "fb-wosn",                # 63.4K / 817K / connected
+        
     ]
 
     graphs = rgraphs(graph_names)
@@ -353,7 +370,7 @@ def real():
         0.05,
         # 0.00,
         # 0.05,
-        0.10,
+        # 0.10,
         # 0.15,
         # 0.20,
         #0.25,
@@ -418,6 +435,28 @@ def rsc_test():
         0.00
     ]
 
+
+@ ex.named_config
+def socials():
+    iters = 10
+    run = [
+           13,
+    ]
+    graph_names = [               # n     / e
+        "soc-facebook",           # 4k    / 87k   / connected
+        "socfb-Cornell5",         # 18.6K / 79K / connected,
+        "socfb-BU10"              # 19.6K / 637.5K / connected
+        "fb-wosn",                # 63.4K / 817K / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+    ]
+    
 @ ex.named_config
 def synthetic():
 

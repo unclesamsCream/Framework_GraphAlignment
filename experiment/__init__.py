@@ -189,6 +189,7 @@ _ALHPA_args = {
     'lap': True,
     'ki': True,
     'lalpha': 10000,
+    'weighting_scheme': 'size'
 }
 _GRASPB_args = {
     'laa': 3,
