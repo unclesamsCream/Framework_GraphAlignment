@@ -91,7 +91,7 @@ def split_graph_hyper(graph, clustering, weighting_scheme='ncut'): # dists (for 
 
     return cluster_graph, subgraphs, # avg_sils # sils # cons # isolated
 
-def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=None, ki=False, lalpha=10000):
+def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=None, ki=False, lalpha=10000, n_comp=10):
     """
     MAtching by Recursive Partition Alignment
     ____
@@ -106,7 +106,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
     """
 
     n = len(np.unique(src_graph))
-    if rsc == 0: rsc = .1*n
+    if rsc == 0: rsc = int(np.sqrt(n)*40)
     eta = 0.2
 
     matching = -1 * np.ones(shape=(n, ), dtype=int)
@@ -163,9 +163,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         tar_adj, tar_nodes = adj_from_edges(tar_e)
         
         print('embedding src graph...')
-        l, src_embedding = spectral_embedding(src_adj, n_components=10)
+        l, src_embedding = spectral_embedding(src_adj, n_components=n_comp)
         print('embedding tar graph...')
-        mu, tar_embedding = spectral_embedding(tar_adj, n_components=10)
+        mu, tar_embedding = spectral_embedding(tar_adj, n_components=n_comp)
 
         diffs = np.abs(np.diff(l))
         diffs_ = np.abs(np.diff(mu))
@@ -174,7 +174,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         K_ = diffs_.argmax() + 2
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
-        # K = max(K, K_, 3)
+        K = max(K, K_, 3)
         print(f'\nFound K={K} at position={pos}')
         src_embedding = src_embedding.T[:K].T
         tar_embedding = tar_embedding.T[:K].T
@@ -183,7 +183,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         warnings.simplefilter('error', category=ConvergenceWarning)
         try:
             print('computing k-means (src graph)')
-            kmeans = KMeans(n_clusters=K, init='random', n_init=10).fit(src_embedding)
+            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(src_embedding)
             src_centroids = kmeans.cluster_centers_
             _src_cluster = kmeans.labels_
             src_dists = kmeans.transform(src_embedding)
@@ -197,6 +197,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             print('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
             kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding)
+            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding)            
             tar_centroids = kmeans.cluster_centers_
             _tar_cluster = kmeans.labels_
             tar_dists = kmeans.transform(tar_embedding)
@@ -349,15 +350,15 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
     return matching, pos_res, np.array(readjustment_accs)
 
-def main(data, eta, rsc, lap, ki, lalpha, weighting_scheme):
-    print(f'\n\n\nstarting run:\nargs: (, eta, rsc, lap, ki, lalpha, weighting_scheme)={(eta, rsc, lap, ki, lalpha, weighting_scheme)}')
+def main(data, eta, rsc, lap, ki, lalpha, weighting_scheme, n_comp):
+    print(f'\n\n\nstarting run:\nargs: (, eta, rsc, lap, ki, lalpha, weighting_scheme, n_comp)={(eta, rsc, lap, ki, lalpha, weighting_scheme, n_comp)}')
     Src = data['src_e']
     Tar = data['tar_e']
     gt = data["gt"]
 
     n = Src.shape[0]
     s = time.time()
-    matching, pos, readj_accs = alhpa(Src, Tar, rsc=rsc, weighting_scheme=weighting_scheme, lap=lap, gt=gt, ki=ki, lalpha=lalpha)
+    matching, pos, readj_accs = alhpa(Src, Tar, rsc=rsc, weighting_scheme=weighting_scheme, lap=lap, gt=gt, ki=ki, lalpha=lalpha, n_comp=n_comp)
     print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
 
     for k, v in pos.items():

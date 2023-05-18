@@ -193,7 +193,7 @@ def playground():
 
 
 @ex.automain
-def main(_run, _log, verbose=False, load=[], plot=[], nice=12, mon=False):
+def main(_run, _log, verbose=False, load=[], plot=[], nice=0, mon=False):
 
     path = f"runs/{_run._id}"
 
