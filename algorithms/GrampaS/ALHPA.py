@@ -1,4 +1,4 @@
-from algorithms import Grampa
+from algorithms import Grampa, base_align
 from Utils import adj_from_edges, compute_laplacian, embed_spectral, expand_matrix, decompose_spectral, spectral_embedding
 import numpy as np
 from numpy.linalg import inv
@@ -106,7 +106,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
     """
 
     n = len(np.unique(src_graph))
-    if rsc == 0: rsc = int(np.sqrt(n)*40)
+    if rsc > 0 and <= 1: rsc = int(n*rsc)
     eta = 0.2
 
     matching = -1 * np.ones(shape=(n, ), dtype=int)
@@ -178,6 +178,14 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         print(f'\nFound K={K} at position={pos}')
         src_embedding = src_embedding.T[:K].T
         tar_embedding = tar_embedding.T[:K].T
+        l = l[:K]
+        mu = mu[:K]
+
+        # I = np.eye(K)
+        # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, K)
+        # print(f'shapes of stuff:\nsrc_emb:{src_embedding.shape}\ntar_emb: {tar_embedding.shape}\nrot_mat: {B.shape}\n\nAlso B:\n{B}')
+        # tar_embedding = (B @ tar_embedding.T).T
+        # raise Exception
 
         # Compute clusters on embedded data with kmeans and lloyd's algorithm
         warnings.simplefilter('error', category=ConvergenceWarning)

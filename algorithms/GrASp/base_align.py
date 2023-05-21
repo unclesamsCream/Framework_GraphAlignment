@@ -75,7 +75,7 @@ def optimize_AB(Cor11, Cor21, n, V11, V21, D11, D21, k):
     B = solver.solve(problem, x=x0)
     # print(B)
     # print(np.reshape(res.x[0:k*k_],(k_,k)).T@np.reshape(res.x[0:k*k_],(k_,k)))
-
+    print(B.shape)
     return B
 
 
@@ -84,6 +84,8 @@ def init_x0(Cor1, Cor2, n, V1, V2, D1, D2, k):
     B = np.identity(k)
 
     for i in range(0, k):
+        print(Cor1.shape, V1.T[:,i].shape, Cor2.shape, V2[:,i].shape)
+        print(Cor1.T.shape, Cor2.T.shape)
         thing1 = np.linalg.norm(Cor1.T@V1[:, i]-Cor2.T@V2[:, i])
         thing2 = np.linalg.norm(Cor1.T@V1[:, i]+Cor2.T@V2[:, i])
         #print('thing1: %f, thing2: %f' %(thing1,thing2))

@@ -238,6 +238,7 @@ def real_noisetest():
         ]
 
     ]
+
     #xlabel = "CA-AstroPh"
     xlabel = "arenas"
     graph_names = namess(tmp)
@@ -328,12 +329,14 @@ def rgraphs(gnames):
 def real():
 
     run = [
-        # 10,
+        10,
         # 12, 
-        13,
+        # 13,
         # 10,
     ]
-    iters = 1
+    _ALHPA_args['n_comp'] = 100
+
+    iters = 5
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -349,14 +352,14 @@ def real():
          # "CA-AstroPh",           # 18k   / 195k  / connected
         # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
         # "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
-        "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
+        # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
         # "socfb-Haverford76",    # 1.4K  / 59.6K / connected
         # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
         # "soc-facebook",         # 4k    / 87k   / connected
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
         # "arenas-pgp",            # 10.68k / 24.316K / connected
         # "socfb-Cornell5",         # 18.6K / 79K / connected,
-        # "socfb-BU10"              # 19.6K / 637.5K / connected
+        "socfb-BU10"              # 19.6K / 637.5K / connected
         # "fb-wosn",                # 63.4K / 817K / connected
         
     ]
@@ -369,7 +372,7 @@ def real():
         # 0.02,
         # 0.03,
         # 0.04,
-        # 0.05,
+        0.05,
         # 0.00,
         # 0.05,
         # 0.10,
@@ -501,22 +504,22 @@ def rsc_small():
     ]
 
     
+def rsc_large():
+    run = [
+        # 10, 
+        12, 
+        13,
+    ]
+    _GrampaS_args['rsc'] = 0.35
+    _ALHPA_args['rsc'] = 0.50
 
-@ ex.named_config
-def socials():
     iters = 10
 
-    run = [
-           13,
-    ]
-
-    _ALHPA_args['rsc'] = 0 # np.sqrt(|V|)*40    
-
-    graph_names = [               # n     / e
+    graph_names = [             # n     / e
         "soc-facebook",           # 4k    / 87k   / connected
         "socfb-Cornell5",         # 18.6K / 79K / connected,
-        "socfb-BU10"              # 19.6K / 637.5K / connected
-        # "fb-wosn",                # 63.4K / 817K / connected
+        "socfb-BU10",              # 19.6K / 637.5K / connected
+        # "CA-AstroPh",           # 18k   / 195k  / connected
     ]
 
     graphs = rgraphs(graph_names)
@@ -525,6 +528,33 @@ def socials():
         0.00,
         0.05,
         0.10,
+    ]
+
+    
+
+@ ex.named_config
+def socials():
+    iters = 3
+
+    run = [
+           13,
+    ]
+
+    _ALHPA_args['rsc'] = 0 # np.sqrt(|V|)*40    
+
+    graph_names = [               # n     / e
+        # "soc-facebook",           # 4k    / 87k   / connected
+        "socfb-Cornell5",         # 18.6K / 79K / connected,
+        # "socfb-BU10"              # 19.6K / 637.5K / connected
+        # "fb-wosn",                # 63.4K / 817K / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        # 0.05,
+        # 0.10,
     ]
 
 @ ex.named_config
