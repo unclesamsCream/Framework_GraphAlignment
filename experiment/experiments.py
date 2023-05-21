@@ -325,7 +325,7 @@ def rgraphs(gnames):
     ]
 
 
-@ ex.named_config
+@ex.named_config
 def real():
 
     run = [
@@ -382,7 +382,7 @@ def real():
     ]
 
 
-@ ex.named_config
+@ex.named_config
 def rsc_synth():
     iters = 1
     run = [
@@ -445,7 +445,7 @@ def rsc_synth():
         0.05,
     ]
 
-@ ex.named_config
+@ex.named_config
 def ncomps():
     run = [
         # 12, 
@@ -471,7 +471,7 @@ def ncomps():
         # 0.05,
     ]
 
-@ ex.named_config
+@ex.named_config
 def rsc_small():
     run = [
         10, 
@@ -504,6 +504,7 @@ def rsc_small():
     ]
 
     
+@ex.named_config
 def rsc_large():
     run = [
         # 10, 
@@ -532,7 +533,7 @@ def rsc_large():
 
     
 
-@ ex.named_config
+@ex.named_config
 def socials():
     iters = 3
 
@@ -557,7 +558,7 @@ def socials():
         # 0.10,
     ]
 
-@ ex.named_config
+@ex.named_config
 def socials_large():
     iters = 10
 
@@ -582,7 +583,7 @@ def socials_large():
         0.10,
     ]
     
-@ ex.named_config
+@ex.named_config
 def synthetic():
 
     # use with 'mall'
@@ -678,7 +679,7 @@ def synthetic():
     ]
 
 
-@ ex.named_config
+@ex.named_config
 def tuned():
     _CONE_args["dim"] = 512
     _LREA_args["iters"] = 40
@@ -687,7 +688,7 @@ def tuned():
     # _ISO_args["lalpha"] = 25
 
 
-@ ex.named_config
+@ex.named_config
 def test():
 
     graph_names = [
