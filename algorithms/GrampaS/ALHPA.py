@@ -106,7 +106,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
     """
 
     n = len(np.unique(src_graph))
-    if rsc > 0 and <= 1: rsc = int(n*rsc)
+    if rsc > 0 and rsc <= 1: rsc = int(n*rsc)
     eta = 0.2
 
     matching = -1 * np.ones(shape=(n, ), dtype=int)
