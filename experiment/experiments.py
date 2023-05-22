@@ -387,10 +387,9 @@ def fb():
 def real():
 
     run = [
-        10,
         12, 
         13,
-        # 10,
+        10,
     ]
     _ALHPA_args['n_comp'] = 10
     _ALHPA_args['rsc'] = 0.5

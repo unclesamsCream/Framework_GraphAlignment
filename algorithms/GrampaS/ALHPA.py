@@ -263,7 +263,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
         # row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
         # partition_alignment = list(zip(range(len(col)), col))
-        partition_alignment = list(zip(range(len(K)), range(len(K))))
+        partition_alignment = list(zip(range(K), range(K)))
         cur_part_acc = []
         part_size_diff = {}
 
