@@ -144,7 +144,11 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         #print(f'GRAMPA:{match}')
         # translate with map and add to solution
         for (n1, n2) in match:
-            matching[src_map[n1]] = tar_map[n2]
+            si = src_map[n1]
+            if si < n:
+                matching[src_map[n1]] = tar_map[n2]
+            else:
+                print('!!!src node outside matching idx!!!')
 
     def cluster_recurse(src_e, tar_e, pos=[(0,0)]):
         pos = pos.copy()
@@ -205,7 +209,8 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             print('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
             kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding)
-            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding)            
+            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding)
+            
             tar_centroids = kmeans.cluster_centers_
             _tar_cluster = kmeans.labels_
             tar_dists = kmeans.transform(tar_embedding)
@@ -256,8 +261,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
 
-        row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
-        partition_alignment = list(zip(range(len(col)), col))
+        # row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
+        # partition_alignment = list(zip(range(len(col)), col))
+        partition_alignment = list(zip(range(len(K)), range(len(K))))
         cur_part_acc = []
         part_size_diff = {}
 
@@ -310,6 +316,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         if C_UPDATED:
             tar_cluster = dict(zip(tar_nodes, _tar_cluster))
             tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
+            tar_cluster_sizes = [len(x) for x in tar_nodes_by_cluster]
             tar_cluster_graph, tar_subgraphs = split_graph_hyper(tar_e, tar_cluster)
             new_part_acc = []
             for (c_s, c_t) in partition_alignment:
@@ -319,6 +326,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
                 acc_count = np.array([node in src_nodes_by_cluster[c_s] for node in s_trans_nodes], dtype=int)
                 #print(f'\nCLUSTER ACC --- AFTER UPDATE\n\n{acc_count.sum()}/{len(acc_count)}={acc_count.mean()}')
                 new_part_acc.append(acc_count.sum())
+
 
             new_part_acc = np.array(new_part_acc)
             print(f'\ncluster numbers after: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
@@ -336,8 +344,8 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             len_ct = len(c_t_nodes)
 
             if len_cs == 0 or len_ct == 0:
-                #print(f'c_s_nodes and c_t_nodes both empty: {c_s_nodes}, {c_t_nodes} -- BREAKING LOOP (Discard matching)')
-                break
+                print(f'c_s_nodes or c_t_nodes empty: {c_s_nodes}, {c_t_nodes} -- CONTINUING LOOP (Discard matching)')
+                continue
 
             # if cluster size is smaller than sqrt(|V|) then align nodes.
             #  else cluster recurse.
