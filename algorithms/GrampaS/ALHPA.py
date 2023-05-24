@@ -156,12 +156,14 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         con_gs = list(nx.connected_components(G_s))
         # print(list(con_gs))
         print(f'\nconnected components in src graph: {[len(x) for x in con_gs]}')
-        src_e = G_s.subgraph(max(con_gs, key=len)).edges
+        # src_e = G_s.subgraph(max(con_gs, key=len)).edges
+        src_e = G_s.edges
         del G_s
         G_t = nx.from_edgelist(tar_e)
         con_gt = list(nx.connected_components(G_t))
         print(f'\nconnected components in tar graph: {[len(x) for x in con_gt]}')
-        tar_e = G_t.subgraph(max(con_gt, key=len)).edges
+        # tar_e = G_t.subgraph(max(con_gt, key=len)).edges
+        tar_e = G_t.edges        
 
         src_adj, src_nodes = adj_from_edges(src_e)
         tar_adj, tar_nodes = adj_from_edges(tar_e)
@@ -173,17 +175,24 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
 
         diffs = np.abs(np.diff(l))
         diffs_ = np.abs(np.diff(mu))
-        diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0 # We do not wish to find k<3
+        # diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0 # We do not wish to find k<3
         K = diffs.argmax() + 2 # +1 due to diff[i] being [i+1] in original array. +1 as eigengap heuristic includes the l=0 vector.
         K_ = diffs_.argmax() + 2
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
-        K = max(K, K_, 3)
-        print(f'\nFound K={K} at position={pos}')
-        src_embedding = src_embedding.T[:K].T
-        tar_embedding = tar_embedding.T[:K].T
-        l = l[:K]
-        mu = mu[:K]
+        # K = max(K, 2)
+        K = max(K, K_, 2) # At least two clusters.
+        K += (max(len(con_gs), len(con_gt)) - 1) # Add 1 for each connected component as spect. clust. should uncover these clusters.
+        
+        # K = 2
+        d = int(np.ceil(np.log2(K)))
+        # print(f'\nFound K={K} at position={pos}')
+        print(f'\nFound K={K}, d={d} at position={pos}')
+
+        src_embedding = src_embedding.T[:d].T
+        tar_embedding = tar_embedding.T[:d].T
+        l = l[:d]
+        mu = mu[:d]
 
         # I = np.eye(K)
         # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, K)
@@ -195,10 +204,10 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         warnings.simplefilter('error', category=ConvergenceWarning)
         try:
             print('computing k-means (src graph)')
-            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(src_embedding)
+            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(src_embedding.T[:2].T)
             src_centroids = kmeans.cluster_centers_
             _src_cluster = kmeans.labels_
-            src_dists = kmeans.transform(src_embedding)
+            src_dists = kmeans.transform(src_embedding.T[:2].T)
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
@@ -208,12 +217,12 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         try:
             print('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
-            kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding)
-            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding)
+            kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding.T[:2].T)
+            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding.T[:2].T)
             
             tar_centroids = kmeans.cluster_centers_
             _tar_cluster = kmeans.labels_
-            tar_dists = kmeans.transform(tar_embedding)
+            tar_dists = kmeans.transform(tar_embedding.T[:2].T)
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
@@ -230,7 +239,23 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         src_cluster_sizes = [len(x) for x in src_nodes_by_cluster]
         tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
         tar_cluster_sizes = [len(x) for x in tar_nodes_by_cluster]
-        print(f'\ncluster numbers: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
+        print(f'\ncluster numbers (2-emb): src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
+
+        # kmeans_s2 = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(src_embedding)
+        # src_centroids_s2 = kmeans_s2.cluster_centers_
+        # _src_cluster_s2 = kmeans_s2.labels_
+        # src_dists_s2 = kmeans_s2.transform(src_embedding)
+        # kmeans_t2 = KMeans(n_clusters=K, init=src_centroids_s2, n_init=1).fit(tar_embedding)
+        # tar_centroids_t2 = kmeans_t2.cluster_centers_
+        # _tar_cluster_t2 = kmeans_t2.labels_
+        # tar_dists_t2 = kmeans_t2.transform(tar_embedding)            
+        # src_cluster_s2 = dict(zip(src_nodes, _src_cluster_s2))
+        # tar_cluster_t2 = dict(zip(tar_nodes, _tar_cluster_t2))
+        # src_nodes_by_cluster_s2 = [[k for k,v in src_cluster_s2.items() if v == i] for i in range(K)]
+        # src_cluster_sizes_s2 = [len(x) for x in src_nodes_by_cluster_s2]
+        # tar_nodes_by_cluster_t2 = [[k for k,v in tar_cluster_t2.items() if v == i] for i in range(K)]
+        # tar_cluster_sizes_t2 = [len(x) for x in tar_nodes_by_cluster_t2]
+        # print(f'\ncluster numbers ({d}-emb): src:{src_cluster_sizes_s2}, tar:{tar_cluster_sizes_t2}\n')        
 
         # 2. split graphs (src, tar) according to cluster.
         # print('Splitting SRC')

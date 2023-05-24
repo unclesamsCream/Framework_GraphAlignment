@@ -424,12 +424,14 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         con_gs = list(nx.connected_components(G_s))
         # print(list(con_gs))
         print(f'\nconnected components in src graph: {[len(x) for x in con_gs]}')
-        src_e = G_s.subgraph(max(con_gs, key=len)).edges
+        # src_e = G_s.subgraph(max(con_gs, key=len)).edges
+        src_e = G_s.edges
         del G_s
         G_t = nx.from_edgelist(tar_e)
         con_gt = list(nx.connected_components(G_t))
         print(f'\nconnected components in tar graph: {[len(x) for x in con_gt]}')
-        tar_e = G_t.subgraph(max(con_gt, key=len)).edges
+        # tar_e = G_t.subgraph(max(con_gt, key=len)).edges
+        tar_e = G_t.edges
 
         src_adj, src_nodes = adj_from_edges(src_e)
         tar_adj, tar_nodes = adj_from_edges(tar_e)
@@ -448,10 +450,10 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         print(f'K:{K}, K_: {K_}')
         K = max(K, K_, 3)
         print(f'\nFound K={K} at position={pos}')
-        src_embedding = src_embedding.T[:K].T
-        tar_embedding = tar_embedding.T[:K].T
-        l = l[:K]
-        mu = mu[:K]
+        src_embedding = src_embedding.T[:2].T
+        tar_embedding = tar_embedding.T[:2].T
+        l = l[:2]
+        mu = mu[:2]
 
         # I = np.eye(K)
         # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, K)
