@@ -203,6 +203,7 @@ _ALHPA_mt_args = {
     'weighting_scheme': 'rcut',
     'n_comp': 10,
     'n_threads': 8,
+    'variation': 'QR',
 }
 _GRASPB_args = {
     'laa': 3,
