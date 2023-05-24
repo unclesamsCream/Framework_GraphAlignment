@@ -9,5 +9,5 @@ from .isorank import isorank2
 # from .isorank import isorank
 from .GrASp import grasp, grasp2,GraspB, base_align
 from .Grampa import Grampa
-from .GrampaS import GrampaS, ALHPA
+from .GrampaS import GrampaS, ALHPA, ALHPA_multithreaded
 

@@ -38,7 +38,9 @@ def global_config():
          9,       #SGWL
         10, #Grampa
         11, #Grasp-B
-        12 #GrampaS
+        12, #GrampaS
+        13,
+        14,
         
     ]
 
