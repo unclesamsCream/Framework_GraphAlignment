@@ -186,12 +186,7 @@ _GrampaS_args = {
     'n_comp': 10,
 }
 _ALHPA_args = {
-    'eta': 0.2,
     'rsc': 0.5,
-    'lap': True,
-    'ki': True,
-    'lalpha': 10000,
-    'weighting_scheme': 'rcut',
     'n_comp': 10,
 }
 _ALHPA_qr_args = {
