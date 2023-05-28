@@ -181,7 +181,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         K_ = diffs_.argmax() + 2
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
-        K = max(K, 2)
+        K = max(K, 3)
         # K = max(K, K_, 2) # At least two clusters.
         # K += (max(len(con_gs), len(con_gt)) - 1) # Add 1 for each connected component as spect. clust. should uncover these clusters.
         
@@ -194,13 +194,6 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         tar_embedding = tar_embedding.T[:d].T
         l = l[:d]
         mu = mu[:d]
-
-        # I = np.eye(K)
-        # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, K)
-        # print(f'shapes of stuff:\nsrc_emb:{src_embedding.shape}\ntar_emb: {tar_embedding.shape}\nrot_mat: {B.shape}\n\nAlso B:\n{B}')
-        # tar_embedding = (B @ tar_embedding.T).T
-        # raise Exception
-
         # Compute clusters on embedded data with kmeans and lloyd's algorithm
         warnings.simplefilter('error', category=ConvergenceWarning)
         try:
@@ -218,8 +211,8 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         try:
             print('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
-            kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding.T[:2].T)
-            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding.T[:2].T)
+            # kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding.T[:2].T)
+            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding.T[:2].T)
             
             tar_centroids = kmeans.cluster_centers_
             _tar_cluster = kmeans.labels_
@@ -240,23 +233,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         src_cluster_sizes = [len(x) for x in src_nodes_by_cluster]
         tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
         tar_cluster_sizes = [len(x) for x in tar_nodes_by_cluster]
-        print(f'\ncluster numbers (2-emb): src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
-
-        # kmeans_s2 = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(src_embedding)
-        # src_centroids_s2 = kmeans_s2.cluster_centers_
-        # _src_cluster_s2 = kmeans_s2.labels_
-        # src_dists_s2 = kmeans_s2.transform(src_embedding)
-        # kmeans_t2 = KMeans(n_clusters=K, init=src_centroids_s2, n_init=1).fit(tar_embedding)
-        # tar_centroids_t2 = kmeans_t2.cluster_centers_
-        # _tar_cluster_t2 = kmeans_t2.labels_
-        # tar_dists_t2 = kmeans_t2.transform(tar_embedding)            
-        # src_cluster_s2 = dict(zip(src_nodes, _src_cluster_s2))
-        # tar_cluster_t2 = dict(zip(tar_nodes, _tar_cluster_t2))
-        # src_nodes_by_cluster_s2 = [[k for k,v in src_cluster_s2.items() if v == i] for i in range(K)]
-        # src_cluster_sizes_s2 = [len(x) for x in src_nodes_by_cluster_s2]
-        # tar_nodes_by_cluster_t2 = [[k for k,v in tar_cluster_t2.items() if v == i] for i in range(K)]
-        # tar_cluster_sizes_t2 = [len(x) for x in tar_nodes_by_cluster_t2]
-        # print(f'\ncluster numbers ({d}-emb): src:{src_cluster_sizes_s2}, tar:{tar_cluster_sizes_t2}\n')        
+        print(f'\ncluster numbers (2-emb): src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')      
 
         # 2. split graphs (src, tar) according to cluster.
         # print('Splitting SRC')
@@ -287,9 +264,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
             match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
 
-        # row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
-        # partition_alignment = list(zip(range(len(col)), col))
-        partition_alignment = list(zip(range(K), range(K)))
+        row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
+        partition_alignment = list(zip(range(len(col)), col))
+        # partition_alignment = list(zip(range(K), range(K)))
         cur_part_acc = []
         part_size_diff = {}
 
