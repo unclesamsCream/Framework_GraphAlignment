@@ -1,7 +1,7 @@
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 import logging
-from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_multithreaded as ALHPA_mt
+from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR
 
 ex = Experiment("ex")
 
@@ -194,16 +194,9 @@ _ALHPA_args = {
     'weighting_scheme': 'rcut',
     'n_comp': 10,
 }
-_ALHPA_mt_args = {
-    'eta': 0.2,
+_ALHPA_qr_args = {
     'rsc': 0.5,
-    'lap': True,
-    'ki': True,
-    'lalpha': 10000,
-    'weighting_scheme': 'rcut',
     'n_comp': 10,
-    'n_threads': 8,
-    'variation': 'QR',
 }
 _GRASPB_args = {
     'laa': 3,
@@ -239,7 +232,7 @@ _algs = [
     (GraspB, _GRASPB_args, [-96], "GRASPB"),
     (GrampaS, _GrampaS_args, [4], f'ALHPA_'),
     (ALHPA, _ALHPA_args, [4], f'ALHPA'),
-    (ALHPA_mt, _ALHPA_mt_args, [4], f'ALHPA_mt'),    
+    (ALHPA_QR, _ALHPA_qr_args, [4], f'ALHPA_QR'),    
 ]   
 
 _acc_names = [
