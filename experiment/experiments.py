@@ -897,12 +897,21 @@ def rsc_small():
     iters = 10
 
     graph_names = [             # n     / e
-        "in-arenas",            # 1.1k  / 5.4k  / connected
-        "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
-        "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
-        "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
-        "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
+        # "in-arenas",            # 1.1k  / 5.4k  / connected
+        # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
+        # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
+        # "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
+        # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
+        # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        # "inf-euroroad_lcon",   # 1k / 1.6k
+        "inf-euroroad",
+        "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # "soc-hamsterster_lcon", # 2k / 16k
+        "soc-hamsterster",
+        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2        
     ]
 
     graphs = rgraphs(graph_names)
