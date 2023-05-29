@@ -223,7 +223,7 @@ def tuning13():
             # {'k': x} for x in [3, 5, 10, 15, 20]
             # {'rsc': x} for x in [2500, 4000, 6000, 8000]
             # {'weighting_scheme': x} for x in ['size', 'rcut', 'ncut']
-            {'n_comp': x} for x in [10, 20, 30]
+            {'n_comp': x} for x in [10, 30, 50]
         ]
     ]
 
@@ -236,11 +236,12 @@ def tuning13():
     graph_names = [             # n     / e
         "in-arenas",            # 1.1k  / 5.4k  / connected
         "socfb-Haverford76",    # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
         "soc-facebook",         # 4k    / 87k   / connected
         "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         "inf-power",            # 4.9K  / 6.6K  / connected
 
-        "bio-dmela",            # 7.4k  / 25.6k / connected
+        # "bio-dmela",            # 7.4k  / 25.6k / connected
 
         # "arenas-pgp",            # 10.68k / 24.316K / connected
         # "CA-AstroPh",           # 18k   / 195k  / connected
@@ -270,7 +271,7 @@ def tuning14():
             # {'k': x} for x in [3, 5, 10, 15, 20]
             # {'rsc': x} for x in [2500, 4000, 6000, 8000]
             # {'weighting_scheme': x} for x in ['size', 'rcut', 'ncut']
-            {'n_comp': x} for x in [10, 20, 30]
+            {'n_comp': x} for x in [10, 30, 50]
         ]
     ]
 
@@ -283,18 +284,10 @@ def tuning14():
     graph_names = [             # n     / e
         "in-arenas",            # 1.1k  / 5.4k  / connected
         "socfb-Haverford76",    # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
         "soc-facebook",         # 4k    / 87k   / connected
         "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
-        "inf-power",            # 4.9K  / 6.6K  / connected
-
-        "bio-dmela",            # 7.4k  / 25.6k / connected
-
-        # "arenas-pgp",            # 10.68k / 24.316K / connected
-        # "CA-AstroPh",           # 18k   / 195k  / connected
-        # "socfb-Cornell5",         # 18.6K / 79K / connected,
-        # "socfb-BU10"              # 19.6K / 637.5K / connected
-        # # "fb-wosn",                # 63.4K / 817K / connected
-        
+        "inf-power",            # 4.9K  / 6.6K  / connected        
     ]
 
     graphs = rgraphs(graph_names)
@@ -442,8 +435,8 @@ def fb():
 
     run = [
         # 10,
-        # 12, 
-        # 13,
+        12, 
+        13,
         14,
         # 10,
     ]
@@ -662,18 +655,11 @@ def mt_test():
 def cons_small():
 
     run = [
-        12, 
+        # 12,        
         13,
-        # 14,
-        # 10,
+        14,
+        10,
     ]
-    _ALHPA_args['n_comp'] = 10
-    _ALHPA_args['rsc'] = 0.5
-    _ALHPA_mt_args['n_comp'] = 10
-    _ALHPA_mt_args['rsc'] = 0.5
-    _GrampaS_args['n_comp'] = 10
-    _GrampaS_args['rsc'] = 0.5
-
     iters = 10
 
     graph_names = [             # n     / e
@@ -707,7 +693,107 @@ def cons_small():
         #0.25,
     ]
 
+@ex.named_config
+def small_size():
+    run = [
+        # 12,        
+        13,
+        14,
+        # 10,
+    ]
+    iters = 10
 
+    graph_names = [                # n     / e
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        # "inf-euroroad_lcon",   # 1k / 1.6k
+        "inf-euroroad",
+        "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # "soc-hamsterster_lcon", # 2k / 16k
+        "soc-hamsterster",
+        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2        
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+    ]
+
+@ex.named_config
+def medium_size():
+    run = [
+        # 12,        
+        13,
+        14,
+        10,
+    ]
+    iters = 10
+
+    graph_names = [             # n     / e
+        "inf-power",            # 4.9K  / 6.6K  / connected
+        "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
+        "bio-dmela",            # 7.4k  / 25.6k / connected
+        "soc-facebook",         # 4k    / 87k   / connected
+        "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+    ]        
+
+@ex.named_config
+def large_size():
+    run = [
+        # 12,        
+        13,
+        14,
+        10,
+    ]
+    iters = 10
+
+    graph_names = [             # n     / e
+        "arenas-pgp",            # 10.68k / 24.316K / connected
+        "CA-AstroPh",           # 18k   / 195k  / connected
+        "socfb-Cornell5",         # 18.6K / 79K / connected,
+        "socfb-BU10"              # 19.6K / 637.5K / connected
+        # "fb-wosn",                # 63.4K / 817K / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+    ]
+
+@ex.named_config
+def fb_wosn():
+    run = [
+        13,
+        # 10,
+    ]
+    iters = 1
+
+    graph_names = [             # n     / e
+        "fb-wosn",                # 63.4K / 817K / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+    ]            
+    
 @ex.named_config
 def rsc_synth():
     iters = 1

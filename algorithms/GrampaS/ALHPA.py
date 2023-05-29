@@ -140,8 +140,6 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, d)
         # print(f'shapes of stuff:\nsrc_emb:{src_embedding.shape}\ntar_emb: {tar_embedding.shape}\nrot_mat: {B.shape}\n\nAlso B:\n{B}')
         # tar_embedding = (B @ tar_embedding.T).T
-        # tar_embedding = tar_embedding @ B
-        # raise Exception
 
         # Compute clusters on embedded data with kmeans and lloyd's algorithm
         warnings.simplefilter('error', category=ConvergenceWarning)
@@ -161,7 +159,7 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             print('computing k-means (tar graph)')
             # Seed target graph kmeans by using the src centroids.
             kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding.T[:d].T)
-            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(tar_embedding.T[:2].T)
+            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(tar_embedding.T[:2].T)
             
             tar_centroids = kmeans.cluster_centers_
             _tar_cluster = kmeans.labels_
