@@ -6,21 +6,21 @@ import numpy as np
 
 # mprof run workexp.py with playground run=[1,2,3,4,5] iters=2 win
 
-def generate_sbm(n, p, k):
+def generate_sbm(n, p, q, k):
     '''
     parameters:
     n: number of nodes to be generated.
-    p: probability of forming an edge within same cluster
+    p: probability of forming an edge within same cluster.
+    q: probability of forming an edge to another cluster.
     k: number of clusters.
     '''
-    q = (1 - p) / k
+    q = q / (k-1)
     pmat = np.zeros(shape=(k, k)) + q
     for i in range(k):
         pmat[i,i] = p
 
     sizes = [n // k for _ in range(k)]
     G = nx.stochastic_block_model(sizes, pmat)
-    # return np.array(G.edges)
     return G
 
 def aaa(vals, dist_type=0):
@@ -888,27 +888,16 @@ def ncomps():
 def rsc_small():
     run = [
         10, 
-        12, 
+        # 12,        
         13,
     ]
-    _GrampaS_args['rsc'] = 50
-    _ALHPA_args['rsc'] = 1000
-
+    _ALHPA_args['rsc'] = 50
     iters = 10
-
     graph_names = [             # n     / e
-        # "in-arenas",            # 1.1k  / 5.4k  / connected
-        # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
-        # "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
-        # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
-        # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
         "in-arenas",               # 1.1k  / 5.4k  / connected
-        # "inf-euroroad_lcon",   # 1k / 1.6k
         "inf-euroroad",
         "socfb-Haverford76",       # 1.4K  / 59.6K / connected
         "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
-        # "soc-hamsterster_lcon", # 2k / 16k
         "soc-hamsterster",
         "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
         "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2        
@@ -925,23 +914,56 @@ def rsc_small():
         0.05,
     ]
 
-    
 @ex.named_config
-def rsc_large():
+def rsc_small2():
     run = [
         # 10, 
-        12, 
+        # 12,        
         13,
     ]
-    _GrampaS_args['rsc'] = 0.50
-    _ALHPA_args['rsc'] = 0.50
+    # _GrampaS_args['rsc'] = 50
+    _ALHPA_args['rsc'] = 1000
 
     iters = 10
 
     graph_names = [             # n     / e
-        # "soc-facebook",           # 4k    / 87k   / connected
-        "socfb-Cornell5",         # 18.6K / 79K / connected,
-        "socfb-BU10",              # 19.6K / 637.5K / connected
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        "inf-euroroad",
+        "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        "soc-hamsterster",
+        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+    ]    
+
+    
+@ex.named_config
+def rsc_large():
+    tmp = [
+        13,  # ALHPA
+        [
+            {'rsc': x} for x in [2500, 4000, 6000, 8000]
+        ]
+    ]
+    _algs[:] = alggs(tmp)
+    run = list(range(len(tmp[1])))
+
+    iters = 5
+
+    graph_names = [             # n     / e
+        "socfb-Cornell5",       # 18.6K / 79K / connected,
+        "socfb-BU10",           # 19.6K / 637.5K / connected
         "CA-AstroPh",           # 18k   / 195k  / connected
     ]
 
@@ -949,8 +971,6 @@ def rsc_large():
 
     noises = [
         0.00,
-        0.05,
-        0.10,
     ]
 
     
@@ -1019,87 +1039,33 @@ def synthetic():
         13,
     ]
     graph_names = [
-        #"arenas",
-        # "powerlaw",
-        # "nw_str",
-        # "watts_str",
-        # "gnp",
-        # "barabasi",
         # "ER(2000)",
         # "ER(4000)",
         # "ER(5000)",
         # "SBM(2000)",
         # "SBM(4000)",
-        "SBM(6000k5_.5)",
-        # "SBM(6000k5_.6)",
-        # "SBM(6000k5_.7)",
-        # "SBM(6000k5_.8)",
-        # "SBM(6000k5_.9)",
-        # "SBM(5000_.20)",
-        # "SBM(5000_.30)",
-        # "SBM(10000)",
-        # "soc-facebook",         # 4k    / 87k   / connected
+        "SBM(4000k5_.5)",
+        "SBM(4000k5_.5)",        
+        "SBM(4000k5_.5)",
     ]
 
     graphs = [
-        # with arenasish load=[1-,1-]
-        # 91-
-        #(gen.loadnx, ('data/arenas.txt',)),
-        #(nx.powerlaw_cluster_graph, (1133, 5, 0.5)),
-        # 92-0
-        #(nx.newman_watts_strogatz_graph, (1133, 7, 0.5)),
-        #(nx.watts_strogatz_graph, (1133, 10, 0.5)),
-        # 92-1
         # (nx.gnp_random_graph, (2000, 0.5)),
         # (nx.gnp_random_graph, (4000, 0.5)),
         # (nx.gnp_random_graph, (5000, 0.5)),
         # (generate_sbm, (2000, .85, 5)),
         # (generate_sbm, (4000, .85, 5)),
         # (generate_sbm, (6000, .5, 5)),
-        (generate_sbm, (6000, .6, 5)),
-        # (generate_sbm, (10000, .6, 5)),
-        # (generate_sbm, (6000, .7, 5)),
-        # (generate_sbm, (6000, .8, 5)),
-        # (generate_sbm, (6000, .9, 5)),
-        # (generate_sbm, (5000, .4, 5)),
-        # (generate_sbm, (5000, .35, 5)),
-        # (generate_sbm, (5000, .65, 5)),
-        # (generate_sbm, (4000, .8, 5)),
-        # (generate_sbm, (4000, .9, 5)),
-        # (generate_sbm, (4000, .95, 5)),
+        (generate_sbm, (4000, .35, .15, 4)),
+        (generate_sbm, (4000, .4, .15, 5)),
+        (generate_sbm, (4000, .5, .15, 5)),
 
-        # (gen.loadnx, ('data/soc-facebook.txt',)),        
-        
-        #(nx.gnp_random_graph, (1133, 0.009)),
-        #(nx.barabasi_albert_graph, (1133, 5)),
-        #(nx.algorithms.bipartite.random_graph,(800,100,0.02)),
-        #(nx.algorithms.bipartite.random_graph,(700,200,0.03)),
-        #(nx.algorithms.bipartite.random_graph,(200,100,0.3)),
-        #(nx.algorithms.bipartite.random_graph,(600,300,0.04)),
-        #(nx.algorithms.bipartite.random_graph,(500,400,0.05)),
-        #(nx.algorithms.bipartite.random_graph,(450,450,0.06)),
-        #(nx.algorithms.bipartite.random_graph,(200,700,0.09)),
-        #(nx.algorithms.bipartite.random_graph,(800,600,0.05))
     ]
 
     noises = [
         0.00,
-        # 0.01,
-        #0.02,
-        #0.03,
-        #0.04,
         0.05,
-        #0.06,
-        #0.07,
-        #0.08,
-        #0.09,
         # 0.10
-
-        #0.1,
-        #0.15,
-        #0.3
-       # 0.1,
-        #0.15
     ]
 
 
