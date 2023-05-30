@@ -755,9 +755,9 @@ def large_size():
         # 12,        
         13,
         14,
-        10,
+        # 10,
     ]
-    iters = 10
+    iters = 5
 
     graph_names = [             # n     / e
         "arenas-pgp",            # 10.68k / 24.316K / connected
