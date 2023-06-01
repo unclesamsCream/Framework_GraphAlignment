@@ -435,13 +435,13 @@ def fb():
 
     run = [
         # 10,
-        12, 
+        # 12, 
         13,
-        14,
+        # 14,
         # 10,
     ]
 
-    iters = 1
+    iters = 10
 
     graph_names = [             # n     / e
         "soc-facebook",         # 4k    / 87k   / connected
@@ -451,7 +451,7 @@ def fb():
 
     noises = [
         0.00,
-        0.05,
+        # 0.05,
     ]
 
 @ex.named_config
@@ -460,16 +460,16 @@ def real():
     run = [
         # 12, 
         13,
-        # 14,w
+        # 14,
         # 10,
     ]
-    # _ALHPA_mt_args['n_comp'] = 100
+    _ALHPA_args['n_comp'] = 100
     # _ALHPA_mt_args['rsc'] = 0.2
     # _ALHPA_args['n_comp'] = 10
     # _ALHPA_args['rsc'] = 0.5
     # _GrampaS_args['n_comp'] = 10
     # _GrampaS_args['rsc'] = 0.5
-    iters = 3
+    iters = 1
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -480,9 +480,9 @@ def real():
         # "in-arenas",            # 1.1k  / 5.4k  / connected
         # # # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
         # "inf-power",            # 4.9K  / 6.6K  / connected
-        # # # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
+        # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
-        "soc-facebook",         # 4k    / 87k   / connected
+        # "soc-facebook",         # 4k    / 87k   / connected
         # # # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
         # # # "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
         # # # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
@@ -491,7 +491,7 @@ def real():
 
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
         # "arenas-pgp",            # 10.68k / 24.316K / connected
-        # "CA-AstroPh",           # 18k   / 195k  / connected
+        "CA-AstroPh",           # 18k   / 195k  / connected
         # "socfb-Cornell5",         # 18.6K / 79K / connected,
         # "socfb-BU10"              # 19.6K / 637.5K / connected
         # # "fb-wosn",                # 63.4K / 817K / connected
@@ -724,21 +724,22 @@ def small_size():
     ]
 
 @ex.named_config
-def medium_size():
+def medium_size(): 
     run = [
         # 12,        
         13,
-        14,
-        10,
+        # 14,
+        # 10,
     ]
-    iters = 10
+    _ALHPA_args['n_comp'] = 20
+    
+    iters = 5
 
     graph_names = [             # n     / e
         "inf-power",            # 4.9K  / 6.6K  / connected
         "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         "bio-dmela",            # 7.4k  / 25.6k / connected
         "soc-facebook",         # 4k    / 87k   / connected
-        "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
     ]
 
     graphs = rgraphs(graph_names)
@@ -795,67 +796,126 @@ def fb_wosn():
     ]            
     
 @ex.named_config
-def rsc_synth():
-    iters = 1
+def synth_inflexion(): 
+    iters = 5
     run = [
-           10,
+        10,
+        13,
     ]
     graph_names = [
-        #"arenas",
-        # "powerlaw",
-        # "nw_str",
-        # "watts_str",
-        # "gnp",
-        # "barabasi",
-        # "ER(2000)",
-        # "ER(4000)",
-        # "ER(5000)",
-        "ER(300)",
         "ER(500)",
         "ER(1000)",
         "ER(1500)",
         "ER(2000)",
+        "ER(3000)",
         "ER(4000)",
-        "SBM(300)",
-        "SBM(500)",
-        "SBM(1000)",
-        "SBM(1500)",
-        "SBM(2000)",
-        "SBM(4000)",
     ]
-
     graphs = [
-        # with arenasish load=[1-,1-]
-        # 91-
-        #(gen.loadnx, ('data/arenas.txt',)),
-        #(nx.powerlaw_cluster_graph, (1133, 5, 0.5)),
-        # 92-0
-        #(nx.newman_watts_strogatz_graph, (1133, 7, 0.5)),
-        #(nx.watts_strogatz_graph, (1133, 10, 0.5)),
-        # 92-1
-        (nx.gnp_random_graph, (300, 0.5)),
         (nx.gnp_random_graph, (500, 0.5)),
         (nx.gnp_random_graph, (1000, 0.5)),
         (nx.gnp_random_graph, (1500, 0.5)),
         (nx.gnp_random_graph, (2000, 0.5)),
+        (nx.gnp_random_graph, (3000, 0.5)),
         (nx.gnp_random_graph, (4000, 0.5)),
-        (generate_sbm, (300, .5, 5)),
-        (generate_sbm, (500, .5, 5)),
-        (generate_sbm, (1000, .5, 5)),
-        (generate_sbm, (1500, .5, 5)),
-        (generate_sbm, (2000, .5, 5)),
-        (generate_sbm, (4000, .5, 5)),
-        # (generate_sbm, (5000, .5, 5)),
+    ]
+
+    noises = [
+        0.00,
+    ]
+
+@ex.named_config
+def synth_ncomp(): 
+    iters = 5
+    tmp = [
+        13,
+        [
+            {'n_comp': x} for x in [10, 20, 30]
+        ]
+    ]
+    _algs[:] = alggs(tmp)
+    run = list(range(len(tmp[1])))
+    graph_names = [
+        "SBM(6000k5)",
+        "SBM(6000k10)",
+        "SBM(6000k20)",
+        "SBM(6000k30)",        
+        "SBM(6000k50)",
+    ]
+
+    graphs = [
+        (generate_sbm, (6000, .35, .15, 5)),
+        (generate_sbm, (6000, .35, .15, 10)),
+        (generate_sbm, (6000, .35, .15, 20)),
+        (generate_sbm, (6000, .35, .15, 30)),
+        (generate_sbm, (6000, .35, .15, 50)),
+    ]
+
+    noises = [
+        0.00,
+    ]
+    
+
+@ex.named_config
+def synth_benchmarks(): 
+    iters = 5
+    run = [
+        13,
+    ]
+    graph_names = [
+        # "ER",
+        "SBMk4",
+        "LFRk4",
+        "SBMk9",
+        "LFRk9",
+    ]
+
+    graphs = [
+        # (nx.gnp_random_graph, (6000, 0.5)),
+        (generate_sbm, (6000, .35, .15, 4)),
+        (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+        (generate_sbm, (6000, .35, .15, 9)),
+        (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
+        
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 100, 500, 1/10000000, 2000)) #  clusters 300-1200
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 150, 800, 1/10000000, 2000)) #  clusters 300-1200
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 300, 1200, 1/10000000, 2000)) # 12 clusters 300-1200
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 600, 1800, 1/10000000, 2000)), # 6 clusters 600-1800
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+
+        # (nx.LFR_benchmark_graph, (10000, 3, 2, 0.3, 15, None, None, 750, 2000, 1/10000000, 2000)), # 13 clusters size 500-2000
+        # (nx.LFR_benchmark_graph, (10000, 3, 2, 0.3, None, 10, None, 1500, 4000, 1/10000000, 2000)), # 4 clusters size 1500-4000
+        # (nx.LFR_benchmark_graph, (15000, 3, 2, 0.3, 10, None, None, 750, 3000, 1/10000000, 2000)), #(n=6000, tau1=3, tau2=2, mu=0.3, average_degree=25, min_community=300, max_community=1200))
     ]
 
     noises = [
         0.00,
         0.01,
         0.02,
-        0.03,
-        0.04,
-        0.05,
+        0.03
+    ]    
+@ex.named_config
+def synth_benchmarks_grampa():
+    iters = 5
+    run = [
+        10,
     ]
+    graph_names = [
+        "SBMk4",
+        "LFRk4",
+    ]
+
+    graphs = [
+        (generate_sbm, (6000, .35, .15, 4)),
+        (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+    ]
+
+    noises = [
+        0.00,
+        0.01,
+        0.02,
+        0.03
+    ]    
 
 @ex.named_config
 def ncomps():
