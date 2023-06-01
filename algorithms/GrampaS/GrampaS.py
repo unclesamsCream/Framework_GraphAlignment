@@ -198,7 +198,7 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         warnings.simplefilter('error', category=ConvergenceWarning)
         try:
             print('computing k-means (src graph)')
-            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(src_embedding.T[:2].T)
+            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(src_embedding.T[:2].T)
             src_centroids = kmeans.cluster_centers_
             _src_cluster = kmeans.labels_
             src_dists = kmeans.transform(src_embedding.T[:2].T)

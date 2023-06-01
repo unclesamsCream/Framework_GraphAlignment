@@ -208,7 +208,8 @@ def alhpa_qr(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
 
                 cand_idcs_dict = {k[1]: [i for i, v in enumerate(_tar_cluster) if v == k[1]] for k in candidate_clusters}
                 # distance to current
-                dists = {k: tar_qr[idcs_list][:, k] for k, idcs_list in cand_idcs_dict.items()}
+                # dists = {k: tar_qr[idcs_list][:, k] for k, idcs_list in cand_idcs_dict.items()}
+                dists = {k: abs(tar_qr[idcs_list][:, k]-tar_qr[idcs_list][:, pp[1]]) for k, idcs_list in cand_idcs_dict.items()}
 
                 while size > 0:
                     best_dist = np.inf
@@ -234,6 +235,28 @@ def alhpa_qr(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
                         # Adjust clustering
                         _tar_cluster[cand_idcs_dict[best_idx[0]][best_idx[1]]] = pp[1]
                         C_UPDATED = True
+
+                # while size > 0:
+                #     best_dist = 0
+                #     best_idx = (0, 0)
+                #     best_c = (None, None)
+
+                #     # for i, k in enumerate(candidate_clusters):
+                #     for k in candidate_clusters:
+                #         dist = dists[k[1]]
+                #         max_idx = np.argmax(dist)
+                #         d = dist[max_idx]
+                #         if d > best_dist and part_size_diff[k] < 0:
+                #             best_dist = d
+                #             best_idx = (k[1], max_idx)
+                #             best_c = k
+
+                #     # Update loop variables
+                #     size -= 1
+                #     if best_c != (None, None):
+                #         dists[best_idx[0]][best_idx[1]] = 0
+                #         part_size_diff[best_c] += 1
+                        
 
         print(f'\nPartition Alignment: {partition_alignment}\n')
         # Only recompute cluster if cluster was changed
