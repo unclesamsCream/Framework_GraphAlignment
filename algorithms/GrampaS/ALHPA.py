@@ -98,6 +98,7 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         print(f'\nconnected components in src graph: {[len(x) for x in con_gs]}')
         # src_e = G_s.subgraph(max(con_gs, key=len)).edges
         src_e = G_s.edges
+        # print(f'INFO: Graph -- |V|={len(list(G_s.nodes))}, |E|={len(list(G_s.edges))}, #/\={round(sum(list(nx.triangles(G_s).values()))/1000, 4)}, CC={round(nx.average_clustering(G_s) / 1000, 5)}')
         del G_s
         G_t = nx.from_edgelist(tar_e)
         con_gt = list(nx.connected_components(G_t))

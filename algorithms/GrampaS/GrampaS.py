@@ -170,9 +170,9 @@ def alhpa(src_graph, tar_graph, rsc=0, weighting_scheme='ncut', lap=False, gt=No
         tar_adj, tar_nodes = adj_from_edges(tar_e)
         
         print('embedding src graph...')
-        l, src_embedding = spectral_embedding(src_adj, n_components=n_comp)
+        l, src_embedding = spectral_embedding(src_adj, n_components=n_comp, flip=False)
         print('embedding tar graph...')
-        mu, tar_embedding = spectral_embedding(tar_adj, n_components=n_comp)
+        mu, tar_embedding = spectral_embedding(tar_adj, n_components=n_comp, flip=False)
 
         diffs = np.abs(np.diff(l))
         diffs_ = np.abs(np.diff(mu))

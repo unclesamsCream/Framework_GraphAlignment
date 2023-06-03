@@ -458,18 +458,18 @@ def fb():
 def real():
 
     run = [
-        # 12, 
+        12, 
         13,
         # 14,
         # 10,
     ]
-    _ALHPA_args['n_comp'] = 100
+    # _ALHPA_args['n_comp'] = 100
     # _ALHPA_mt_args['rsc'] = 0.2
     # _ALHPA_args['n_comp'] = 10
     # _ALHPA_args['rsc'] = 0.5
     # _GrampaS_args['n_comp'] = 10
     # _GrampaS_args['rsc'] = 0.5
-    iters = 1
+    iters = 3
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -479,10 +479,11 @@ def real():
         # "bio-celegans",         # 453   / 2k    / connected
         # "in-arenas",            # 1.1k  / 5.4k  / connected
         # # # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        # "inf-power",            # 4.9K  / 6.6K  / connected
+        "soc-facebook",         # 4k    / 87k   / connected
+        "inf-power",            # 4.9K  / 6.6K  / connected
         # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
-        # "soc-facebook",         # 4k    / 87k   / connected
+
         # # # "soc-hamsterster",      # 2.4K  / 16.6K / disc - 400
         # # # "socfb-Bowdoin47",      # 2.3K  / 84.4K / disc - only 2
         # # # "socfb-Hamilton46",     # 2.3K  / 96.4K / disc - only 2
@@ -491,7 +492,7 @@ def real():
 
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
         # "arenas-pgp",            # 10.68k / 24.316K / connected
-        "CA-AstroPh",           # 18k   / 195k  / connected
+        # "CA-AstroPh",           # 18k   / 195k  / connected
         # "socfb-Cornell5",         # 18.6K / 79K / connected,
         # "socfb-BU10"              # 19.6K / 637.5K / connected
         # # "fb-wosn",                # 63.4K / 817K / connected
@@ -857,12 +858,13 @@ def synth_ncomp():
 
 @ex.named_config
 def synth_benchmarks(): 
-    iters = 5
+    iters = 1
     run = [
         13,
+        10,
     ]
     graph_names = [
-        # "ER",
+        "ER",
         "SBMk4",
         "LFRk4",
         "SBMk9",
@@ -870,11 +872,11 @@ def synth_benchmarks():
     ]
 
     graphs = [
-        # (nx.gnp_random_graph, (6000, 0.5)),
-        (generate_sbm, (6000, .35, .15, 4)),
-        (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
-        (generate_sbm, (6000, .35, .15, 9)),
-        (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
+        (nx.gnp_random_graph, (500, 0.05)),
+        # (generate_sbm, (6000, .35, .15, 4)),
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, None, 4, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+        # (generate_sbm, (6000, .35, .15, 8)),
+        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, None, 4, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
         
         # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 100, 500, 1/10000000, 2000)) #  clusters 300-1200
         # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 150, 800, 1/10000000, 2000)) #  clusters 300-1200
@@ -890,31 +892,25 @@ def synth_benchmarks():
 
     noises = [
         0.00,
-        0.01,
-        0.02,
-        0.03
+        # 0.01,
+        # 0.02,
+        # 0.03
     ]    
 @ex.named_config
 def synth_benchmarks_grampa():
-    iters = 5
+    iters = 10
     run = [
         10,
-    ]
-    graph_names = [
-        "SBMk4",
-        "LFRk4",
+        13
     ]
 
     graphs = [
-        (generate_sbm, (6000, .35, .15, 4)),
-        (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+        (nx.gnp_random_graph, (4000, p)) for p in [0.01, 0.05, 0.1, 0.25, 0.5]
     ]
+    graph_names = [f'ER(p={p})' for p in [0.01, 0.05, 0.1, 0.25, 0.5]]
 
     noises = [
         0.00,
-        0.01,
-        0.02,
-        0.03
     ]    
 
 @ex.named_config

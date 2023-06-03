@@ -191,7 +191,7 @@ def _deterministic_vector_sign_flip(u):
     u *= signs[:, np.newaxis]
     return u
 
-def spectral_embedding(adjacency, *, n_components=25, random_state=None):
+def spectral_embedding(adjacency, *, n_components=25, random_state=None,  flip=True):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -267,6 +267,7 @@ def spectral_embedding(adjacency, *, n_components=25, random_state=None):
     l = l[::-1]
     # print(f'\nlambdas:\n{l}\n1-l:{1-l}')
     embedding = embedding / dd
-    embedding = _deterministic_vector_sign_flip(embedding)
+    if flip:
+        embedding = _deterministic_vector_sign_flip(embedding)
 
     return l[1:n_components], embedding[1:n_components].T
