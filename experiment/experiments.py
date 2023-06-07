@@ -6,7 +6,7 @@ import numpy as np
 
 # mprof run workexp.py with playground run=[1,2,3,4,5] iters=2 win
 
-def generate_sbm(n, p, q, k):
+def generate_sbm(n, rho, k, p=.7, q=.3):
     '''
     parameters:
     n: number of nodes to be generated.
@@ -14,7 +14,9 @@ def generate_sbm(n, p, q, k):
     q: probability of forming an edge to another cluster.
     k: number of clusters.
     '''
-    q = q / (k-1)
+    p = p * rho
+    q = (q * rho) / (k-1)
+    
     pmat = np.zeros(shape=(k, k)) + q
     for i in range(k):
         pmat[i,i] = p
@@ -458,15 +460,15 @@ def fb():
 def real():
 
     run = [
-        12, 
-        13,
-        # 14,
+        # 12, 
+        # 13,
+        14,
         # 10,
     ]
     # _ALHPA_args['n_comp'] = 100
     # _ALHPA_mt_args['rsc'] = 0.2
     # _ALHPA_args['n_comp'] = 10
-    # _ALHPA_args['rsc'] = 0.5
+    _ALHPA_qr_args['rsc'] = 0.6
     # _GrampaS_args['n_comp'] = 10
     # _GrampaS_args['rsc'] = 0.5
     iters = 3
@@ -479,8 +481,8 @@ def real():
         # "bio-celegans",         # 453   / 2k    / connected
         # "in-arenas",            # 1.1k  / 5.4k  / connected
         # # # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
-        "soc-facebook",         # 4k    / 87k   / connected
-        "inf-power",            # 4.9K  / 6.6K  / connected
+        # "soc-facebook",         # 4k    / 87k   / connected
+        # "inf-power",            # 4.9K  / 6.6K  / connected
         # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
         # "bio-dmela",            # 7.4k  / 25.6k / connected
 
@@ -491,7 +493,7 @@ def real():
         # # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
 
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
-        # "arenas-pgp",            # 10.68k / 24.316K / connected
+        "arenas-pgp",            # 10.68k / 24.316K / connected
         # "CA-AstroPh",           # 18k   / 195k  / connected
         # "socfb-Cornell5",         # 18.6K / 79K / connected,
         # "socfb-BU10"              # 19.6K / 637.5K / connected
@@ -507,7 +509,7 @@ def real():
         # 0.02,
         # 0.03,
         # 0.04,
-        0.05,
+        # 0.05,
         # 0.00,
         # 0.05,
         # 0.10,
@@ -796,6 +798,40 @@ def fb_wosn():
         0.05,
     ]            
     
+@ex.named_config
+def synth_density(): 
+    iters = 7
+    run = [
+        13,
+        14
+    ]
+    graph_names = [f'ER(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [f'SBM(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
+
+    graphs = [(nx.gnp_random_graph, (4000, rho)) for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [(nx.gnp_random_graph, (4000, rho, 6)) for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
+
+    noises = [
+        0.00,
+        0.025,
+        0.05,
+    ]
+
+@ex.named_config
+def synth_density_grampa(): 
+    iters = 7
+    run = [
+        10
+    ]
+    graph_names = [f'ER(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [f'SBM(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
+
+    graphs = [(nx.gnp_random_graph, (4000, rho)) for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [(nx.gnp_random_graph, (4000, rho, 6)) for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
+
+    noises = [
+        0.00,
+        0.025,
+        0.05,
+    ]    
+
+
 @ex.named_config
 def synth_inflexion(): 
     iters = 5
