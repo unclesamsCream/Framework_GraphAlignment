@@ -299,6 +299,7 @@ def run_exp(G, output_path, _log):
                 res4 = []
                 for i, g in enumerate(g_it):
                     _log.info("iteration:(%s/%s)", i+1, len(g_it))
+                    print(f'Average Cluster coeff:\n{nx.average_clustering(nx.from_edgelist(g[1]))}')
 
                     time2, res3 = run_algs(g)
 
