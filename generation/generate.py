@@ -183,9 +183,22 @@ def init1(graphs, iters):
 
     #     randcheck = path
 
-    S_G = [
-        [alg(*args) for _ in range(iters)] for alg, args in graphs
-    ]
+    S_G = []
+    for i, (alg, args) in enumerate(graphs):
+        cur_iters = 0
+        generated = []
+        while len(generated) < iters:
+            try:
+                cur_iters += 1
+                ggraph = alg(*args)
+                generated.append(ggraph)
+            except Exception as e:
+                print(f'Failed to generate graph {str(alg)} at iteration {cur_iters} with parameters:', *args)
+        S_G.append(generated)
+
+    # S_G = [
+    #     [alg(*args) for _ in range(iters)] for alg, args in graphs
+    # ]
 
     return S_G, np.random.rand(1)[0]
 
