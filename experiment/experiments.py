@@ -955,7 +955,7 @@ def synth_():
 
 @ex.named_config
 def synth_er_sbm(): 
-    iters = 10
+    iters = 1
     run = [
         13,
         14,
@@ -968,7 +968,7 @@ def synth_er_sbm():
     ]
 
     graphs = [
-        (nx.gnp_random_graph, (4000, 0.05)),
+        (nx.gnp_random_graph, (4000, 0.005)),
         (generate_sbm, (4000, 0.1, 6)),
         # gen_lfr_tuple((4000, 3, 2, 0.1, 15, None, None, 50, 1000, 1/10000000, 2000))
     ]
@@ -1016,7 +1016,7 @@ def synth_lfr():
     ]
 
     graphs = [
-        gen_lfr_tuple((4000, 3, 2, 0.1, 15, None, None, 50, 1000, 1/10000000, 2000)),        
+        gen_lfr_tuple((4000, 3, 2, 0.1, 15, None, None, 50, 1000, 1/10000000, 500)),        
     ]
 
     noises = [
