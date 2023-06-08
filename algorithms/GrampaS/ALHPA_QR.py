@@ -62,6 +62,8 @@ def alhpa_qr(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
 
     matching = -1 * np.ones(shape=(n, ), dtype=int)
     readjustment_accs = []
+    clustering_accs_pre = []
+    clustering_accs_post = []    
     all_pos = []
     def match_grampa(src, tar):
         if isinstance(src, tuple) and isinstance(tar, tuple):
@@ -276,10 +278,16 @@ def alhpa_qr(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
 
 
             new_part_acc = np.array(new_part_acc)
+            cacc_pre = sum(cur_part_acc) / sum(src_cluster_sizes)
+            cacc_post = sum(new_part_acc) / sum(src_cluster_sizes)
+
             print(f'\ncluster numbers after: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
-            print(f'\n cluster acc before: {cur_part_acc}, after: {new_part_acc}')
+            print(f'\n cluster acc before: {cur_part_acc}: {cacc_pre}, after: {new_part_acc}: {cacc_post}')
+            
             print(part_size_diff)
             readjustment_accs.append((new_part_acc-cur_part_acc).sum())
+            clustering_accs_pre.append(cacc_pre)
+            clustering_accs_post.append(cacc_post)
         # 4. recurse or match
         for i, (c_s, c_t) in enumerate(partition_alignment):
             #print(f'Iterating partition alignments -- Current pair = {(c_s, c_t)}')
@@ -311,7 +319,7 @@ def alhpa_qr(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         pos_res = {'max_depth': len(max(all_pos, key=lambda x: len(x))), 'avg_depth': np.array([len(x) for x in all_pos]).mean()}# , pos': all_pos
     matching = np.c_[np.linspace(0, n-1, n).astype(int), matching].astype(int).T
 
-    return matching, pos_res, np.array(readjustment_accs)
+    return matching, pos_res, np.array(readjustment_accs), np.array(clustering_accs_pre), np.array(clustering_accs_post)
 
 def main(data, rsc, n_comp):
     print(f'\n\n\nstarting run:\nargs: (rsc, n_comp)={(rsc, n_comp)}')
@@ -320,8 +328,9 @@ def main(data, rsc, n_comp):
     gt = data["gt"]
 
     n = Src.shape[0]
-    matching, pos, readj_accs = alhpa_qr(Src, Tar, rsc, n_comp, gt)
+    matching, pos, readj_accs, cacc_pre, cacc_post = alhpa_qr(Src, Tar, rsc, n_comp, gt)
     print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
+    print(f'average cluster acc.: (pre,post): {cacc_pre.mean()},{cacc_post.mean()}')
 
     for k, v in pos.items():
         print(f'{k}:\n{v}')
