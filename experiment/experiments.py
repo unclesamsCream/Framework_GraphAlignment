@@ -6,6 +6,11 @@ import numpy as np
 
 # mprof run workexp.py with playground run=[1,2,3,4,5] iters=2 win
 
+def gen_lfr_tuple(args):
+    print('generating lfr:', *args)
+    return (nx.LFR_benchmark_graph, args)
+
+
 def generate_sbm(n, rho, k, p=.7, q=.3):
     '''
     parameters:
@@ -471,7 +476,7 @@ def real():
     _ALHPA_qr_args['rsc'] = 0.6
     # _GrampaS_args['n_comp'] = 10
     # _GrampaS_args['rsc'] = 0.5
-    iters = 3
+    iters = 1
 
     graph_names = [             # n     / e
         # "ca-netscience",       # 379   / 914   / connected
@@ -479,7 +484,7 @@ def real():
         # "high-school",
         # "yeast"
         # "bio-celegans",         # 453   / 2k    / connected
-        # "in-arenas",            # 1.1k  / 5.4k  / connected
+        "in-arenas",            # 1.1k  / 5.4k  / connected
         # # # "inf-euroroad",         # 1.2K  / 1.4K  / disc - 200
         # "soc-facebook",         # 4k    / 87k   / connected
         # "inf-power",            # 4.9K  / 6.6K  / connected
@@ -493,7 +498,7 @@ def real():
         # # "socfb-Swarthmore42",   # 1.7K  / 61.1K / disc - only 2
 
         # "ca-Erdos992",          # 6.1K  / 7.5K  / disc - 100 + 1k disc nodes
-        "arenas-pgp",            # 10.68k / 24.316K / connected
+        # "arenas-pgp",            # 10.68k / 24.316K / connected
         # "CA-AstroPh",           # 18k   / 195k  / connected
         # "socfb-Cornell5",         # 18.6K / 79K / connected,
         # "socfb-BU10"              # 19.6K / 637.5K / connected
@@ -800,19 +805,22 @@ def fb_wosn():
     
 @ex.named_config
 def synth_density(): 
-    iters = 7
+    iters = 1
     run = [
         13,
-        14
+        # 14
     ]
-    graph_names = [f'ER(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [f'SBM(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
+    # graph_names = [f'ER(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [f'SBM(4000p={rho})' for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
 
-    graphs = [(nx.gnp_random_graph, (4000, rho)) for rho in [0.05, 0.1, 0.15, 0.2, 0.25]] + [(nx.gnp_random_graph, (4000, rho, 6)) for rho in [0.05, 0.1, 0.15, 0.2, 0.25]]
+    graph_names = [f'SBM(4000p={rho})' for rho in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]]
+
+    graphs = [(nx.gnp_random_graph, (2000, rho, 6)) for rho in [0.05, # 0.1, 0.2, 0.3, 0.4, 0.5]
+              ]]
 
     noises = [
         0.00,
-        0.025,
-        0.05,
+        # 0.025,
+        # 0.05,
     ]
 
 @ex.named_config
@@ -893,11 +901,12 @@ def synth_ncomp():
     
 
 @ex.named_config
-def synth_benchmarks(): 
+def synth_(): 
     iters = 1
     run = [
         13,
-        10,
+        14,
+        # 10
     ]
     graph_names = [
         "ER",
@@ -905,48 +914,134 @@ def synth_benchmarks():
         "LFRk4",
         "SBMk9",
         "LFRk9",
+        "ER",
+        "SBMk4",
+        "LFRk4",
+        "SBMk9",
+        "LFRk9",
+
+    ]
+
+    graphs = [gen_lfr_tuple((4000, 3, 2, 0.05, k, None, None, 50, 1000, 1/10000000, 2000)) for mu in [0.05, 0.1, 0.3] for k in [15, 30]] #[0.05, 0.1, 0.2, 0.3]
+    # graphs = [
+    #     # (nx.gnp_random_graph, (500, 0.05)),
+    #     # (generate_sbm, (6000, .35, .15, 4)),
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, None, 4, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+    #     # (generate_sbm, (6000, .35, .15, 8)),
+
+    #     # (nx.LFR_benchmark_graph, (4000, 3, 2, 0.05, None, 4, None, 250, 1000, 1/10000000, 2000)), # 9 clusters        
+        
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 100, 500, 1/10000000, 2000)) #  clusters 300-1200
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 150, 800, 1/10000000, 2000)) #  clusters 300-1200
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 300, 1200, 1/10000000, 2000)) # 12 clusters 300-1200
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 600, 1800, 1/10000000, 2000)), # 6 clusters 600-1800
+    #     # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
+
+    #     # (nx.LFR_benchmark_graph, (10000, 3, 2, 0.3, 15, None, None, 750, 2000, 1/10000000, 2000)), # 13 clusters size 500-2000
+    #     # (nx.LFR_benchmark_graph, (10000, 3, 2, 0.3, None, 10, None, 1500, 4000, 1/10000000, 2000)), # 4 clusters size 1500-4000
+    #     # (nx.LFR_benchmark_graph, (15000, 3, 2, 0.3, 10, None, None, 750, 3000, 1/10000000, 2000)), #(n=6000, tau1=3, tau2=2, mu=0.3, average_degree=25, min_community=300, max_community=1200))
+    # ]
+
+    noises = [
+        0.00,
+        0.05,
+        0.1,
+        # 0.2,
+        # 0.02,
+        # 0.03
+    ]
+
+
+@ex.named_config
+def synth_er_sbm(): 
+    iters = 10
+    run = [
+        13,
+        14,
+        10,
+    ]
+    graph_names = [
+        "ER",
+        "asd",
+        "fd"
     ]
 
     graphs = [
-        (nx.gnp_random_graph, (500, 0.05)),
-        # (generate_sbm, (6000, .35, .15, 4)),
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, None, 4, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
-        # (generate_sbm, (6000, .35, .15, 8)),
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, None, 4, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
-        
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 100, 500, 1/10000000, 2000)) #  clusters 300-1200
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 150, 800, 1/10000000, 2000)) #  clusters 300-1200
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 300, 1200, 1/10000000, 2000)) # 12 clusters 300-1200
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 450, 1500, 1/10000000, 2000)), # 9 clusters 450-1500
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 15, None, None, 600, 1800, 1/10000000, 2000)), # 6 clusters 600-1800
-        # (nx.LFR_benchmark_graph, (6000, 3, 2, 0.3, 10, None, None, 900, 2400, 1/10000000, 2000)), # 4 clusters 900-2400
-
-        # (nx.LFR_benchmark_graph, (10000, 3, 2, 0.3, 15, None, None, 750, 2000, 1/10000000, 2000)), # 13 clusters size 500-2000
-        # (nx.LFR_benchmark_graph, (10000, 3, 2, 0.3, None, 10, None, 1500, 4000, 1/10000000, 2000)), # 4 clusters size 1500-4000
-        # (nx.LFR_benchmark_graph, (15000, 3, 2, 0.3, 10, None, None, 750, 3000, 1/10000000, 2000)), #(n=6000, tau1=3, tau2=2, mu=0.3, average_degree=25, min_community=300, max_community=1200))
+        (nx.gnp_random_graph, (4000, 0.05)),
+        (generate_sbm, (4000, 0.1, 6)),
+        # gen_lfr_tuple((4000, 3, 2, 0.1, 15, None, None, 50, 1000, 1/10000000, 2000))
     ]
 
     noises = [
         0.00,
-        # 0.01,
-        # 0.02,
-        # 0.03
-    ]    
+        0.05,
+        0.1,
+    ]
+
+
 @ex.named_config
-def synth_benchmarks_grampa():
+def synth_sbm(): 
     iters = 10
     run = [
+        13,
+        14,
         10,
+    ]
+    graph_names = [
+        "SBM"
+    ]
+
+    graphs = [
+        (generate_sbm, (4000, 0.1, 6))
+        
+    ]
+
+    noises = [
+        0.00,
+        0.05,
+        0.1,
+    ]
+
+@ex.named_config
+def synth_lfr():
+    iters = 10
+    run = [
+        13,
+        14,
+        10
+    ]
+    graph_names = [
+        "LFR"
+    ]
+
+    graphs = [
+        gen_lfr_tuple((4000, 3, 2, 0.1, 15, None, None, 50, 1000, 1/10000000, 2000)),        
+    ]
+
+    noises = [
+        0.00,
+        0.05,
+        0.1,
+    ]
+
+@ex.named_config
+def synth_benchmarks_grampa():
+    iters = 1
+    run = [
+        # 10,
         13
     ]
 
     graphs = [
-        (nx.gnp_random_graph, (4000, p)) for p in [0.01, 0.05, 0.1, 0.25, 0.5]
+        (nx.gnp_random_graph, (4000, p)) for p in [0.01, 0.1] #0.05, 0.1, 0.25, 0.5
     ]
     graph_names = [f'ER(p={p})' for p in [0.01, 0.05, 0.1, 0.25, 0.5]]
 
     noises = [
         0.00,
+        0.05,
+        0.10,
     ]    
 
 @ex.named_config
