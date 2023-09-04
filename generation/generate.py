@@ -193,7 +193,7 @@ def init1(graphs, iters):
                 ggraph = alg(*args)
                 generated.append(ggraph)
             except Exception as e:
-                print(f'Failed to generate graph {str(alg)} at iteration {cur_iters} with parameters:', *args)
+                print(f'Failed to generate graph ({len(generated)+1}/{iters}) {str(alg)} at iteration {cur_iters} with parameters:', *args)
         S_G.append(generated)
 
     # S_G = [
