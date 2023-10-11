@@ -12,6 +12,8 @@ from sklearn.cluster import k_means, KMeans
 from sklearn.exceptions import ConvergenceWarning
 import time
 import traceback
+from threading import Thread, Lock
+from scipy.linalg import qr, svd
 
 def split_graph(graph, clustering):
     '''Split a graph into disjunct clusters and construct weighted graph where a node represents a cluster.
@@ -31,7 +33,16 @@ def split_graph(graph, clustering):
     subgraphs = [np.array(G.edges) for G in Gs]
     return subgraphs
 
-def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
+def QR_clustering(eigenvectors):
+    k = eigenvectors.shape[1]
+    _, _, piv = qr(eigenvectors.T, pivoting=True)
+    Ut, _, v = svd(eigenvectors[piv[:k], :].T)
+    UTVT = abs(np.dot(eigenvectors, np.dot(Ut, v.conj())))
+    # print(f'shape: {UTVT.shape}')
+    # print(UTVT)
+    return UTVT.argmax(axis=1), UTVT
+
+def alhpa_qr(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
     """
     MAtching by Recursive Partition Alignment
     ____
@@ -44,16 +55,15 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
     Returns:
       matching (np.array): Array of 2-tuples each representing a matching pair nodes (n1, n2) where n1 is in src_graph and n2 is in tar_graph.
     """
-
+    
     n = len(np.unique(src_graph))
     if rsc > 0 and rsc <= 1: rsc = int(n*rsc)
     eta = 0.2
 
     matching = -1 * np.ones(shape=(n, ), dtype=int)
-    #initilize the n array to -1
-    clustering_accs_pre = []
-    clustering_accs_post = []
     readjustment_accs = []
+    clustering_accs_pre = []
+    clustering_accs_post = []    
     all_pos = []
     def match_grampa(src, tar):
         if isinstance(src, tuple) and isinstance(tar, tuple):
@@ -62,10 +72,7 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         else:
             src_adj, src_map = adj_from_edges(src)
             tar_adj, tar_map = adj_from_edges(tar)
-        # get the  adjecency matrix and the map of the index of the nodes
-
         diff = len(src_map) - len(tar_map)
-        #calculate the difference between the number of nodes in the two graphs
         #print(diff)
         if diff < 0: # expand sub src
             #print(f'size before expansion: {src_adj.shape}')
@@ -74,7 +81,6 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             #print(f'src_map size before: {len(src_map)}')
             src_map = list(src_map) + [-1] * abs(diff)
             #print(f'src_map size after: {len(src_map)}')
-        # if the difference is less than 0, then expand the matrix of the src graph
         if diff > 0: # expand sub tar
             #print(f'size before expansion: {tar_adj.shape}')
             tar_adj = expand_matrix(tar_adj, diff)
@@ -84,8 +90,6 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             #print(f'tar_map size after: {len(tar_map)}')
 
         sub_sim = Grampa.grampa(src_adj, tar_adj, eta, lap=True)
-        # get the similarity matrix of the two graphs that is n by n, each element is the similarity between the two nodes
-        
         #print(f'adjacency matrices for src and tar (shapes): {src_adj.shape}, {tar_adj.shape})')
         #print(sub_sim)
         r, c, _ = lapjv(-sub_sim)
@@ -98,7 +102,6 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
                 matching[src_map[n1]] = tar_map[n2]
             else:
                 print('!!!src node outside matching idx!!!')
-        #get the matching of the two graphs
 
     def cluster_recurse(src_e, tar_e, pos=[(0,0)]):
         pos = pos.copy()
@@ -106,61 +109,50 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         con_gs = list(nx.connected_components(G_s))
         # print(list(con_gs))
         print(f'\nconnected components in src graph: {[len(x) for x in con_gs]}')
-        # src_e = G_s.subgraph(max(con_gs, key=len)).edges
-        src_e = G_s.edges
-        # print(f'INFO: Graph -- |V|={len(list(G_s.nodes))}, |E|={len(list(G_s.edges))}, #/\={round(sum(list(nx.triangles(G_s).values()))/1000, 4)}, CC={round(nx.average_clustering(G_s) / 1000, 5)}')
+        src_e = G_s.subgraph(max(con_gs, key=len)).edges
         del G_s
         G_t = nx.from_edgelist(tar_e)
         con_gt = list(nx.connected_components(G_t))
         print(f'\nconnected components in tar graph: {[len(x) for x in con_gt]}')
-        # tar_e = G_t.subgraph(max(con_gt, key=len)).edges
-        tar_e = G_t.edges
-        del G_t
+        tar_e = G_t.subgraph(max(con_gt, key=len)).edges
 
         src_adj, src_nodes = adj_from_edges(src_e)
         tar_adj, tar_nodes = adj_from_edges(tar_e)
         
         print('embedding src graph...')
         l, src_embedding = spectral_embedding(src_adj, n_components=n_comp)
-        # the default value of n_comp is 10
         print('embedding tar graph...')
         mu, tar_embedding = spectral_embedding(tar_adj, n_components=n_comp)
-        
+
         diffs = np.abs(np.diff(l))
         diffs_ = np.abs(np.diff(mu))
-        # diffs[0] = diffs[1] = diffs_[0] = diffs_[1] = 0 # We do not wish to find k<3
+
         K = diffs.argmax() + 2 # +1 due to diff[i] being [i+1] in original array. +1 as eigengap heuristic includes the l=0 vector.
         K_ = diffs_.argmax() + 2
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
         K = max(K, 2)
-        # K = max(K, K_, 2) # At least two clusters.
-        # K += (max(len(con_gs), len(con_gt)) - 1) # Add 1 for each connected component as spect. clust. should uncover these clusters.
-        
-        # K = 2
-        # d = int(np.ceil(np.log2(K)))
-        d = 2
+        # K = max(K, K_, 2)
+        K = 10
+        d = int(np.ceil(np.log2(K)))
         # print(f'\nFound K={K} at position={pos}')
         print(f'\nFound K={K}, d={d} at position={pos}')
 
-        src_embedding = src_embedding.T[:d].T
-        tar_embedding = tar_embedding.T[:d].T
-        l = l[:d]
-        mu = mu[:d]
+        src_embedding = src_embedding.T[:K].T
+        tar_embedding = tar_embedding.T[:K].T
+        l = l[:K]
+        mu = mu[:K]
 
-        # I = np.eye(d)
-        # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, d)
+        # I = np.eye(K)
+        # B = base_align.optimize_AB(I, I, 0, src_embedding.T, tar_embedding.T, l, mu, K)
         # print(f'shapes of stuff:\nsrc_emb:{src_embedding.shape}\ntar_emb: {tar_embedding.shape}\nrot_mat: {B.shape}\n\nAlso B:\n{B}')
         # tar_embedding = (B @ tar_embedding.T).T
 
         # Compute clusters on embedded data with kmeans and lloyd's algorithm
         warnings.simplefilter('error', category=ConvergenceWarning)
         try:
-            print('computing k-means (src graph)')
-            kmeans = KMeans(n_clusters=K, init='k-means++', n_init=1).fit(src_embedding.T[:d].T)
-            src_centroids = kmeans.cluster_centers_
-            _src_cluster = kmeans.labels_
-            src_dists = kmeans.transform(src_embedding.T[:d].T)
+            print('computing QR-cluster (src graph)')
+            _src_cluster, src_qr = QR_clustering(src_embedding)
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
@@ -168,14 +160,8 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
         try:
-            print('computing k-means (tar graph)')
-            # Seed target graph kmeans by using the src centroids.
-            kmeans = KMeans(n_clusters=K, init=src_centroids, n_init=1).fit(tar_embedding.T[:d].T)
-            # kmeans = KMeans(n_clusters=K, init='k-means++', n_init=10).fit(tar_embedding.T[:2].T)
-            
-            tar_centroids = kmeans.cluster_centers_
-            _tar_cluster = kmeans.labels_
-            tar_dists = kmeans.transform(tar_embedding.T[:d].T)
+            print('computing QR-cluster (tar graph)')
+            _tar_cluster, tar_qr = QR_clustering(tar_embedding)            
         except Exception as e:
             traceback.print_exc()
             print(repr(e))
@@ -193,13 +179,13 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         print(f'\ncluster numbers (2-emb): src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
 
         # 2. split graphs (src, tar) according to cluster.
-        # print('Splitting SRC')
+
         src_subgraphs = split_graph(src_e, src_cluster)
-        # print('Splitting TAR')
+
         tar_subgraphs = split_graph(tar_e, tar_cluster)
 
         C_UPDATED = False
-        # row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
+
         partition_alignment = list(zip(range(K), range(K)))
         cur_part_acc = []
         part_size_diff = {}
@@ -219,23 +205,27 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             if size > 0:
                 # find candidate clusters from which to borrow nodes
                 candidate_clusters = [k for (k, v) in part_size_diff.items() if v < 0]
+                # candidate_clusters = [k[1] for (k, v) in part_size_diff.items() if v < 0]
                 # list of indices of tar_nodes that correspond to candidate cluster c_i for all c_i candidate (target) clusters.
-                cand_idcs_list = [[i for i, v in enumerate(_tar_cluster) if v == j[1]] for j in candidate_clusters]
+
+                cand_idcs_dict = {k[1]: [i for i, v in enumerate(_tar_cluster) if v == k[1]] for k in candidate_clusters}
                 # distance to current
-                dists = [tar_dists[idcs_list][:, pp[1]] for idcs_list in cand_idcs_list]
+                # dists = {k: tar_qr[idcs_list][:, k] for k, idcs_list in cand_idcs_dict.items()}
+                dists = {k: abs(tar_qr[idcs_list][:, k]-tar_qr[idcs_list][:, pp[1]]) for k, idcs_list in cand_idcs_dict.items()}
 
                 while size > 0:
                     best_dist = np.inf
                     best_idx = (0, 0)
                     best_c = (None, None)
 
-                    for i, k in enumerate(candidate_clusters):
-                        dist = dists[i]
+                    # for i, k in enumerate(candidate_clusters):
+                    for k in candidate_clusters:
+                        dist = dists[k[1]]
                         min_idx = np.argmin(dist)
                         d = dist[min_idx]
                         if d < best_dist and part_size_diff[k] < 0:
                             best_dist = d
-                            best_idx = (i, min_idx)
+                            best_idx = (k[1], min_idx)
                             best_c = k
 
                     # Update loop variables
@@ -245,8 +235,30 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
                         part_size_diff[best_c] += 1
 
                         # Adjust clustering
-                        _tar_cluster[cand_idcs_list[best_idx[0]][best_idx[1]]] = pp[1]
+                        _tar_cluster[cand_idcs_dict[best_idx[0]][best_idx[1]]] = pp[1]
                         C_UPDATED = True
+
+                # while size > 0:
+                #     best_dist = 0
+                #     best_idx = (0, 0)
+                #     best_c = (None, None)
+
+                #     # for i, k in enumerate(candidate_clusters):
+                #     for k in candidate_clusters:
+                #         dist = dists[k[1]]
+                #         max_idx = np.argmax(dist)
+                #         d = dist[max_idx]
+                #         if d > best_dist and part_size_diff[k] < 0:
+                #             best_dist = d
+                #             best_idx = (k[1], max_idx)
+                #             best_c = k
+
+                #     # Update loop variables
+                #     size -= 1
+                #     if best_c != (None, None):
+                #         dists[best_idx[0]][best_idx[1]] = 0
+                #         part_size_diff[best_c] += 1
+                        
 
         print(f'\nPartition Alignment: {partition_alignment}\n')
         # Only recompute cluster if cluster was changed
@@ -276,11 +288,6 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             readjustment_accs.append((new_part_acc-cur_part_acc).sum())
             clustering_accs_pre.append(cacc_pre)
             clustering_accs_post.append(cacc_post)
-
-            print(f'\ncluster numbers after: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
-            print(f'\n cluster acc before: {cur_part_acc}, after: {new_part_acc}')
-            print(part_size_diff)
-            readjustment_accs.append((new_part_acc-cur_part_acc).sum())
         # 4. recurse or match
         for i, (c_s, c_t) in enumerate(partition_alignment):
             #print(f'Iterating partition alignments -- Current pair = {(c_s, c_t)}')
@@ -321,11 +328,9 @@ def main(data, rsc, n_comp):
     gt = data["gt"]
 
     n = Src.shape[0]
-    s = time.time()
-    matching, pos, readj_accs, cacc_pre, cacc_post = alhpa(Src, Tar, rsc, n_comp, gt)
+    matching, pos, readj_accs, cacc_pre, cacc_post = alhpa_qr(Src, Tar, rsc, n_comp, gt)
     print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
     print(f'average cluster acc.: (pre,post): {cacc_pre.mean()},{cacc_post.mean()}')
-
 
     for k, v in pos.items():
         print(f'{k}:\n{v}')

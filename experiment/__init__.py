@@ -1,7 +1,7 @@
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 import logging
-from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR
+from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR, Grampa_k5, Grampa_k10, Grampa_k15, Grampa_k20, Grampa_k_halfN,ALHPA_k2, ALHPA_k5, ALHPA_k10, ALHPA_k15, ALHPA_k20, ALHPA_k_halfN, ALHPA_QR_k2, ALHPA_QR_k5, ALHPA_QR_k10, ALHPA_QR_k8, ALHPA_QR_k20, ALHPA_QR_k_halfN
 
 ex = Experiment("ex")
 
@@ -209,6 +209,34 @@ _GRASPB_args = {
     'k_span':40
 
 }
+_Grampa_k15_args = {
+    'eta': 0.2,
+    'lalpha': 10000,
+    'lap': True
+}
+_Grampa_k20_args = {
+    'eta': 0.2,
+    'lalpha': 10000,
+    'lap': True
+}
+_Grampa_k5_args = {
+    'eta': 0.2,
+    'lalpha': 10000,
+    'lap': True
+}
+_Grampa_k10_args = {
+    'eta': 0.2,
+    'lalpha': 10000,
+    'lap': True
+}
+Grampa_k_halfN_args = {
+    'eta': 0.2,
+    'lalpha': 10000,
+    'lap': True
+}
+
+
+    
 
 
 _algs = [
@@ -227,8 +255,28 @@ _algs = [
     (GraspB, _GRASPB_args, [-96], "GRASPB"),
     (GrampaS, _GrampaS_args, [4], f'ALHPA_'),
     (ALHPA, _ALHPA_args, [4], f'ALHPA'),
-    (ALHPA_QR, _ALHPA_qr_args, [4], f'ALHPA_QR'),    
-]   
+    (ALHPA_QR, _ALHPA_qr_args, [4], f'ALHPA_QR'),
+
+    (Grampa_k5, _Grampa_k5_args, [3], f'Grampa_k5'),
+    (Grampa_k10, _Grampa_k10_args, [3], f'Grampa_k10'),
+    (Grampa_k15, _Grampa_k15_args, [3], f'Grampa_k15'),
+    (Grampa_k20, _Grampa_k20_args, [3], f'Grampa_k20'),
+    (Grampa_k_halfN, Grampa_k_halfN_args, [3], f'Grampa_k_halfN'),
+
+    (ALHPA_k2, _ALHPA_args, [4], f'ALHPA_k2'),
+    (ALHPA_k5, _ALHPA_args, [4], f'ALPHA_k5'),
+    (ALHPA_k10, _ALHPA_args, [4], f'ALPHA_k10'),
+    (ALHPA_k15, _ALHPA_args, [4], f'ALPHA_k15'),
+    (ALHPA_k20, _ALHPA_args, [4], f'ALPHA_k20'),
+    (ALHPA_k_halfN, _ALHPA_args, [4], f'ALPHA_k_halfN'),
+
+    (ALHPA_QR_k2, _ALHPA_qr_args, [4], f'ALPHA_QR_k2'),
+    (ALHPA_QR_k5, _ALHPA_qr_args, [4], f'ALPHA_QR_k5'),
+    (ALHPA_QR_k10, _ALHPA_qr_args, [4], f'ALPHA_QR_k10'),
+    (ALHPA_QR_k8, _ALHPA_qr_args, [4], f'ALPHA_QR_k8'),
+    (ALHPA_QR_k20, _ALHPA_qr_args, [4], f'ALPHA_QR_k20'),
+    (ALHPA_QR_k_halfN, _ALHPA_qr_args, [4], f'ALPHA_QR_k_halfN'),
+]
 
 _acc_names = [
     "acc",

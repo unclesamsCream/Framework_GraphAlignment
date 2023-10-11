@@ -144,7 +144,7 @@ def main(data, eta,lalpha, lap, ki=False):
       l,U =eigh(Src)
       mu,V = eigh(Tar)
 
-  k = 20
+  k = int(n/2)
   l = l[-k:]
   mu = mu[-k:]
   U = U[:, -k:]

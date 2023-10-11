@@ -705,22 +705,22 @@ def cons_small():
 def small_size():
     run = [
         # 12,        
-        13,
-        14,
-        # 10,
+        # 13,
+        # 14,
+        10,
     ]
     iters = 10
 
     graph_names = [                # n     / e
         "in-arenas",               # 1.1k  / 5.4k  / connected
-        # "inf-euroroad_lcon",   # 1k / 1.6k
-        "inf-euroroad",
-        "socfb-Haverford76",       # 1.4K  / 59.6K / connected
-        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
-        # "soc-hamsterster_lcon", # 2k / 16k
-        "soc-hamsterster",
-        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
-        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2        
+        # # "inf-euroroad_lcon",   # 1k / 1.6k
+        # "inf-euroroad",
+        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        # "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # "soc-hamsterster_lcon", # 2k / 16k
+        # "soc-hamsterster",
+        # "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        # "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
     ]
 
     graphs = rgraphs(graph_names)
@@ -1255,6 +1255,116 @@ def synthetic():
         # 0.10
     ]
 
+@ex.named_config
+def grampha_with_k():
+    run = [
+        # 12,
+        # 13,
+        # 14,
+        10,
+        15,
+        16,
+        17,
+        18,
+        19,
+    ]
+    iters = 10
+
+    graph_names = [                # n     / e
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        # "inf-euroroad_lcon",   # 1k / 1.6k
+        "inf-euroroad",
+        "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # "soc-hamsterster_lcon", # 2k / 16k
+        # "soc-hamsterster",
+        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+        0.15,
+        0.20,
+        0.25,
+    ]
+
+@ex.named_config
+def ALHPA_with_k():
+    run = [
+        # 12,
+        13,
+        # 14,
+        20,
+        21,
+        22,
+        23,
+        24,
+        # 25,
+    ]
+    iters = 10
+
+    graph_names = [                # n     / e
+        # "in-arenas",               # 1.1k  / 5.4k  / connected
+        # "inf-euroroad_lcon",   # 1k / 1.6k
+        # "inf-euroroad",
+        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # # "soc-hamsterster_lcon", # 2k / 16k
+        # # "soc-hamsterster",
+        # "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        # "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+
+    ]
+@ex.named_config
+def ALHPA_QR_with_k():
+    run = [
+        # 12,
+        # 13,
+        14,
+        26, #ALPHA_QR_k2
+        27, #ALPHA_QR_k5
+        28, #ALPHA_QR_k8
+        29, #ALPHA_QR_k10
+    ]
+    iters = 10
+
+    graph_names = [                # n     / e
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        # "inf-euroroad_lcon",   # 1k / 1.6k
+        # "inf-euroroad",
+        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        # "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # # "soc-hamsterster_lcon", # 2k / 16k
+        # # "soc-hamsterster",
+        # "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        # "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+
+    ]
 
 @ex.named_config
 def tuned():

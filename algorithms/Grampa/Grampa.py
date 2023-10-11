@@ -141,7 +141,7 @@ def main(data, eta,lalpha, lap, ki=False):
   else:
       l,U =eigh(Src)
       mu,V = eigh(Tar)      
-  
+
   #l, U = decompose_Tlaplacian(Src,1.5)
   #mu, V = decompose_Tlaplacian(Tar,1.5)
   l = np.array([l])

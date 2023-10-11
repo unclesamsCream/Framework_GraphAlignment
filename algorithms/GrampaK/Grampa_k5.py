@@ -145,10 +145,14 @@ def main(data, eta,lalpha, lap, ki=False):
       mu,V = eigh(Tar)
 
   k = 5
-  l = l[:k]
-  mu = mu[:k]
-  U = U[:, :k]
-  V = V[:, :k]
+  l = l[-k:]
+  mu = mu[-k:]
+  U = U[:, -k:]
+  V = V[:, -k:]
+  # l = l[:k]
+  # mu = mu[:k]
+  # U = U[:, :k]
+  # V = V[:, :k]
 
   #l, U = decompose_Tlaplacian(Src,1.5)
   #mu, V = decompose_Tlaplacian(Tar,1.5)

@@ -39,8 +39,27 @@ def global_config():
         10, #Grampa
         11, #Grasp-B
         12, #GrampaS
-        13,
-        14,
+        13, #ALHPA
+        14, #ALHPA_QR
+        15, #Grampa_k5
+        16, #Grampa_k10
+        17, #Grampa_k15
+        18, #Grampa_k20
+        19, #Grampa_k_halfN
+
+        20, #ALHPA_K2
+        21, #ALPHA_k5
+        22, #ALPHA_k10
+        23, #ALPHA_k15
+        24, #ALPHA_k20
+        25, #ALPHA_k_halfN
+
+        26, #ALPHA_QR_k2
+        27, #ALPHA_QR_k5
+        28, #ALPHA_QR_k8
+        29, #ALPHA_QR_k10
+        30, #ALPHA_QR_k20
+        31, #ALPHA_QR_k_halfN
         
     ]
 

@@ -134,6 +134,8 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         print(f'diffs:\n{diffs}\n{diffs_}\n')
         print(f'K:{K}, K_: {K_}')
         K = max(K, 2)
+        
+        K = 10
         # K = max(K, K_, 2) # At least two clusters.
         # K += (max(len(con_gs), len(con_gt)) - 1) # Add 1 for each connected component as spect. clust. should uncover these clusters.
         
