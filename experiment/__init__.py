@@ -235,8 +235,35 @@ Grampa_k_halfN_args = {
     'lap': True
 }
 
+_ALHPA_args_tau_5p = {
+    'rsc': 0.05,
+    'n_comp': 10,
+}
 
-    
+_ALHPA_args_tau_10p = {
+    'rsc': 0.1,
+    'n_comp': 10,
+}
+_ALHPA_args_tau_20p = {
+    'rsc': 0.2,
+    'n_comp': 10,
+}
+_ALHPA_args_tau_30p = {
+    'rsc': 0.3,
+    'n_comp': 10,
+}
+_ALHPA_args_tau_40p = {
+    'rsc': 0.4,
+    'n_comp': 10,
+}
+_ALHPA_args_tau_60p = {
+    'rsc': 0.6,
+    'n_comp': 10,
+}
+_ALHPA_args_tau_70p = {
+    'rsc': 0.7,
+    'n_comp': 10,
+}   
 
 
 _algs = [
@@ -276,6 +303,25 @@ _algs = [
     (ALHPA_QR_k8, _ALHPA_qr_args, [4], f'ALPHA_QR_k8'),
     (ALHPA_QR_k20, _ALHPA_qr_args, [4], f'ALPHA_QR_k20'),
     (ALHPA_QR_k_halfN, _ALHPA_qr_args, [4], f'ALPHA_QR_k_halfN'),
+
+    (ALHPA, _ALHPA_args_tau_5p, [4], f'ALHPA_tau_5p'), #32
+    (ALHPA, _ALHPA_args_tau_10p, [4], f'ALHPA_tau_10p'), #33
+    (ALHPA, _ALHPA_args_tau_20p, [4], f'ALHPA_tau_20p'), #34
+    (ALHPA, _ALHPA_args_tau_30p, [4], f'ALHPA_tau_30p'), #35
+    (ALHPA, _ALHPA_args_tau_40p, [4], f'ALHPA_tau_40p'), #36
+    (ALHPA, _ALHPA_args_tau_60p, [4], f'ALHPA_tau_60p'), #37
+    (ALHPA, _ALHPA_args_tau_70p, [4], f'ALHPA_tau_70p'), #38
+
+    (ALHPA_k2, _ALHPA_args_tau_5p, [4], f'ALHPA_k2_tau_5p'), #38
+    (ALHPA_k2, _ALHPA_args_tau_10p, [4], f'ALHPA_k2_tau_10p'), #39
+    (ALHPA_k2, _ALHPA_args_tau_20p, [4], f'ALHPA_k2_tau_20p'), #40
+    (ALHPA_k2, _ALHPA_args_tau_30p, [4], f'ALHPA_k2_tau_30p'), #41
+    (ALHPA_k2, _ALHPA_args_tau_40p, [4], f'ALHPA_k2_tau_40p'), #42
+    (ALHPA_k2, _ALHPA_args_tau_60p, [4], f'ALHPA_k2_tau_60p'), #43
+
+    
+
+
 ]
 
 _acc_names = [

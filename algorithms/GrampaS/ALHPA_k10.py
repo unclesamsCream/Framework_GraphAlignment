@@ -143,7 +143,7 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         # d = int(np.ceil(np.log2(K)))
         d = 2
         # print(f'\nFound K={K} at position={pos}')
-        print(f'\nFound K={K}, d={d} at position={pos}')
+        # print(f'\nFound K={K}, d={d} at position={pos}')
 
         src_embedding = src_embedding.T[:d].T
         tar_embedding = tar_embedding.T[:d].T

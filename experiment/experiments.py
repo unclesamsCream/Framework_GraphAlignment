@@ -742,6 +742,7 @@ def medium_size():
     _ALHPA_args['n_comp'] = 20
     
     iters = 5
+    # iters = 10
 
     graph_names = [             # n     / e
         "inf-power",            # 4.9K  / 6.6K  / connected
@@ -1296,6 +1297,7 @@ def grampha_with_k():
 @ex.named_config
 def ALHPA_with_k():
     run = [
+        10,
         # 12,
         13,
         # 14,
@@ -1309,20 +1311,21 @@ def ALHPA_with_k():
     iters = 10
 
     graph_names = [                # n     / e
-        # "in-arenas",               # 1.1k  / 5.4k  / connected
+        "in-arenas",               # 1.1k  / 5.4k  / connected
         # "inf-euroroad_lcon",   # 1k / 1.6k
-        # "inf-euroroad",
-        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "inf-euroroad",
+        "socfb-Haverford76",       # 1.4K  / 59.6K / connected
         "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
         # # # "soc-hamsterster_lcon", # 2k / 16k
         # # "soc-hamsterster",
-        # "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
-        # "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
     ]
 
     graphs = rgraphs(graph_names)
 
     noises = [
+        0.00,
         0.01,
         0.02,
         0.03,
@@ -1330,6 +1333,151 @@ def ALHPA_with_k():
         0.05,
 
     ]
+@ex.named_config
+def ALHPA_with_k_mid():
+    run = [
+        10,
+        # 12,
+        13,
+        # 14,
+        20,
+        21,
+        22,
+        # 23,
+        # 24,
+        # 25,
+    ]
+    iters = 5
+
+    graph_names = [                # n     / e
+        # "inf-power",            # 4.9K  / 6.6K  / connected
+        # "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
+        # "bio-dmela",            # 7.4k  / 25.6k / connected
+        "soc-facebook",         # 4k    / 87k   / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+        # 0.00,
+        # 0.01,
+        # 0.02,
+        # 0.03,
+        # 0.04,
+        # 0.05,
+
+    ]    
+
+@ex.named_config
+def ALHPA_with_tau():
+    run = [
+        13,
+
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+    ]
+    iters = 10
+
+    graph_names = [                # n     / e
+        # "in-arenas",               # 1.1k  / 5.4k  / connected
+        # # "inf-euroroad_lcon",   # 1k / 1.6k
+        # "inf-euroroad",
+        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # # # "soc-hamsterster_lcon", # 2k / 16k
+        # # # "soc-hamsterster",
+        "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        # 0.05,
+
+    ]
+@ex.named_config
+def ALHPA_with_tau_mid():
+    run = [
+        13,
+
+        # 32,
+        # 33,
+        # 34,
+        35,
+        36,
+        37,
+        38,
+
+    ]
+    iters = 5
+
+    graph_names = [                # n     / e
+        # "inf-power",            # 4.9K  / 6.6K  / connected
+        "ca-GrQc",              # 4.2k  / 13.4K / connected - (5.2k  / 14.5K)?
+        "bio-dmela",            # 7.4k  / 25.6k / connected
+        # "soc-facebook",         # 4k    / 87k   / connected
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.05,
+        0.10,
+
+    ]
+
+@ex.named_config
+def ALHPA_with_k2_tau():
+    run = [
+        13,
+
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+    ]
+    iters = 10
+
+    graph_names = [                # n     / e
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        # # "inf-euroroad_lcon",   # 1k / 1.6k
+        # "inf-euroroad",
+        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        # "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # # # "soc-hamsterster_lcon", # 2k / 16k
+        # # # "soc-hamsterster",
+        # "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        # "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        # 0.05,
+
+    ]
+
 @ex.named_config
 def ALHPA_QR_with_k():
     run = [
