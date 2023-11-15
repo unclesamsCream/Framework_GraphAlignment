@@ -67,15 +67,40 @@ def global_config():
         35, #ALPHA_tau_30p
         36, #ALPHA_tau_40p
         37, #ALPHA_tau_60p
+        38, #70
+        39, #100 
 
-        38, 
-        #ALPHA_k2_tau_5p
-        39, #ALPHA_k2_tau_10p
-        40, #ALPHA_k2_tau_20p
-        41, #ALPHA_k2_tau_30p
-        42, #ALPHA_k2_tau_40p
-        43, #ALPHA_k2_tau_60p
-        44, 
+
+
+        40, 
+        41, 
+        42, 
+        43,
+        44,
+        45, 
+        46,
+        47,
+
+        48, #ALPHA_QR_tau_5p
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+
+        56, #ALPHA_QR_k5_tau_5p
+        57, #ALPHA_QR_k5_tau_10p
+        58, #ALPHA_QR_k5_tau_20p
+        59, #ALPHA_QR_k5_tau_30p
+        60, #ALPHA_QR_k5_tau_40p
+        61, #ALPHA_QR_k5_tau_60p
+        62, #ALPHA_QR_k5_tau_70p
+        63, #ALPHA_QR_k5_tau_100p
+
+        64, #GrampaL
+
     ]
 
     accs = [

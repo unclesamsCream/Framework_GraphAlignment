@@ -1,7 +1,7 @@
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 import logging
-from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR, Grampa_k5, Grampa_k10, Grampa_k15, Grampa_k20, Grampa_k_halfN,ALHPA_k2, ALHPA_k5, ALHPA_k10, ALHPA_k15, ALHPA_k20, ALHPA_k_halfN, ALHPA_QR_k2, ALHPA_QR_k5, ALHPA_QR_k10, ALHPA_QR_k8, ALHPA_QR_k20, ALHPA_QR_k_halfN
+from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR, Grampa_k5, Grampa_k10, Grampa_k15, Grampa_k20, Grampa_k_halfN,ALHPA_k2, ALHPA_k5, ALHPA_k10, ALHPA_k15, ALHPA_k20, ALHPA_k_halfN, ALHPA_QR_k2, ALHPA_QR_k5, ALHPA_QR_k10, ALHPA_QR_k8, ALHPA_QR_k20, ALHPA_QR_k_halfN,GrampaL
 
 ex = Experiment("ex")
 
@@ -264,7 +264,14 @@ _ALHPA_args_tau_70p = {
     'rsc': 0.7,
     'n_comp': 10,
 }   
+_ALHPA_args_tau_100p = {
+    'rsc': 1,
+    'n_comp': 10,
+}
 
+_GrampaL_args = {
+    'rsc': 1,
+}
 
 _algs = [
     (gwl, _GW_args, [3], "GW"),
@@ -299,8 +306,8 @@ _algs = [
 
     (ALHPA_QR_k2, _ALHPA_qr_args, [4], f'ALPHA_QR_k2'),
     (ALHPA_QR_k5, _ALHPA_qr_args, [4], f'ALPHA_QR_k5'),
-    (ALHPA_QR_k10, _ALHPA_qr_args, [4], f'ALPHA_QR_k10'),
     (ALHPA_QR_k8, _ALHPA_qr_args, [4], f'ALPHA_QR_k8'),
+     (ALHPA_QR_k10, _ALHPA_qr_args, [4], f'ALPHA_QR_k10'),
     (ALHPA_QR_k20, _ALHPA_qr_args, [4], f'ALPHA_QR_k20'),
     (ALHPA_QR_k_halfN, _ALHPA_qr_args, [4], f'ALPHA_QR_k_halfN'),
 
@@ -311,17 +318,36 @@ _algs = [
     (ALHPA, _ALHPA_args_tau_40p, [4], f'ALHPA_tau_40p'), #36
     (ALHPA, _ALHPA_args_tau_60p, [4], f'ALHPA_tau_60p'), #37
     (ALHPA, _ALHPA_args_tau_70p, [4], f'ALHPA_tau_70p'), #38
+    (ALHPA, _ALHPA_args_tau_100p, [4], f'ALHPA_tau_100p'), #39
 
-    (ALHPA_k2, _ALHPA_args_tau_5p, [4], f'ALHPA_k2_tau_5p'), #38
-    (ALHPA_k2, _ALHPA_args_tau_10p, [4], f'ALHPA_k2_tau_10p'), #39
-    (ALHPA_k2, _ALHPA_args_tau_20p, [4], f'ALHPA_k2_tau_20p'), #40
-    (ALHPA_k2, _ALHPA_args_tau_30p, [4], f'ALHPA_k2_tau_30p'), #41
-    (ALHPA_k2, _ALHPA_args_tau_40p, [4], f'ALHPA_k2_tau_40p'), #42
-    (ALHPA_k2, _ALHPA_args_tau_60p, [4], f'ALHPA_k2_tau_60p'), #43
+    (ALHPA_k5, _ALHPA_args_tau_5p, [4], f'ALPHA_k5_tau_5p'), #40
+    (ALHPA_k5, _ALHPA_args_tau_10p, [4], f'ALPHA_k5_tau_10p'), #41
+    (ALHPA_k5, _ALHPA_args_tau_20p, [4], f'ALPHA_k5_tau_20p'), #42
+    (ALHPA_k5, _ALHPA_args_tau_30p, [4], f'ALPHA_k5_tau_30p'), #43
+    (ALHPA_k5, _ALHPA_args_tau_40p, [4], f'ALPHA_k5_tau_40p'), #44
+    (ALHPA_k5, _ALHPA_args_tau_60p, [4], f'ALPHA_k5_tau_60p'), #45
+    (ALHPA_k5, _ALHPA_args_tau_70p, [4], f'ALPHA_k5_tau_70p'), #46
+    (ALHPA_k5, _ALHPA_args_tau_100p, [4], f'ALPHA_k5_tau_100p'), #47
 
-    
+    (ALHPA_QR, _ALHPA_args_tau_5p, [4], f'ALPHA_QR_tau_5p'), #48
+    (ALHPA_QR, _ALHPA_args_tau_10p, [4], f'ALPHA_QR_tau_10p'), #49
+    (ALHPA_QR, _ALHPA_args_tau_20p, [4], f'ALPHA_QR_tau_20p'), #50
+    (ALHPA_QR, _ALHPA_args_tau_30p, [4], f'ALPHA_QR_tau_30p'), #51
+    (ALHPA_QR, _ALHPA_args_tau_40p, [4], f'ALPHA_QR_tau_40p'), #52
+    (ALHPA_QR, _ALHPA_args_tau_60p, [4], f'ALPHA_QR_tau_60p'), #53
+    (ALHPA_QR, _ALHPA_args_tau_70p, [4], f'ALPHA_QR_tau_70p'), #54
+    (ALHPA_QR, _ALHPA_args_tau_100p, [4], f'ALPHA_QR_tau_100p'), #55
 
+    (ALHPA_QR_k5, _ALHPA_args_tau_5p, [4], f'ALHPA_QR_k5_tau_5p'), #56
+    (ALHPA_QR_k5, _ALHPA_args_tau_10p, [4], f'ALHPA_QR_k5_tau_10p'), #57
+    (ALHPA_QR_k5, _ALHPA_args_tau_20p, [4], f'ALHPA_QR_k5_tau_20p'), #58
+    (ALHPA_QR_k5, _ALHPA_args_tau_30p, [4], f'ALHPA_QR_k5_tau_30p'), #59
+    (ALHPA_QR_k5, _ALHPA_args_tau_40p, [4], f'ALHPA_QR_k5_tau_40p'), #60
+    (ALHPA_QR_k5, _ALHPA_args_tau_60p, [4], f'ALHPA_QR_k5_tau_60p'), #61
+    (ALHPA_QR_k5, _ALHPA_args_tau_70p, [4], f'ALHPA_QR_k5_tau_70p'), #62
+    (ALHPA_QR_k5, _ALHPA_args_tau_100p, [4], f'ALHPA_QR_k5_tau_100p'), #63
 
+    (GrampaL, _GrampaL_args , [4], "GRAMPA_L"), #64
 ]
 
 _acc_names = [
