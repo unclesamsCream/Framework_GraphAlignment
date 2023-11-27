@@ -1,7 +1,7 @@
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
 import logging
-from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR, Grampa_k5, Grampa_k10, Grampa_k15, Grampa_k20, Grampa_k_halfN,ALHPA_k2, ALHPA_k5, ALHPA_k10, ALHPA_k15, ALHPA_k20, ALHPA_k_halfN, ALHPA_QR_k2, ALHPA_QR_k5, ALHPA_QR_k10, ALHPA_QR_k8, ALHPA_QR_k20, ALHPA_QR_k_halfN,GrampaL
+from algorithms import gwl, conealign, grasp as grasp, regal, eigenalign, NSD, isorank2 as isorank, netalign, klaus, sgwl,Grampa,GraspB,GrampaS, ALHPA, ALHPA_QR, Grampa_k5, Grampa_k10, Grampa_k15, Grampa_k20, Grampa_k_halfN,ALHPA_k2, ALHPA_k5, ALHPA_k10, ALHPA_k15, ALHPA_k20, ALHPA_k_halfN, ALHPA_QR_k2, ALHPA_QR_k5, ALHPA_QR_k10, ALHPA_QR_k8, ALHPA_QR_k20, ALHPA_QR_k_halfN,GrampaL,ALHPA_S
 
 ex = Experiment("ex")
 
@@ -348,6 +348,8 @@ _algs = [
     (ALHPA_QR_k5, _ALHPA_args_tau_100p, [4], f'ALHPA_QR_k5_tau_100p'), #63
 
     (GrampaL, _GrampaL_args , [4], "GRAMPA_L"), #64
+
+    (ALHPA_S, _ALHPA_args, [4], f'ALHPA_S'), #65
 ]
 
 _acc_names = [

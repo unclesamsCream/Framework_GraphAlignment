@@ -1796,6 +1796,37 @@ def test_GrampaL():
     ]
 
 @ex.named_config
+def test_ALHPA_S():
+    run = [
+        65,
+    ]
+    iters = 5
+
+    graph_names = [                # n     / e
+        "in-arenas",               # 1.1k  / 5.4k  / connected
+        # # # "inf-euroroad_lcon",   # 1k / 1.6k
+        # "inf-euroroad",
+        # "socfb-Haverford76",       # 1.4K  / 59.6K / connected
+        # "socfb-Swarthmore42",      # 1.7K  / 61.1K / disc - only 2
+        # # # # # "soc-hamsterster_lcon", # 2k / 16k
+        # # # # "soc-hamsterster",
+        # "socfb-Bowdoin47",         # 2.3K  / 84.4K / disc - only 2
+        # "socfb-Hamilton46",        # 2.3K  / 96.4K / disc - only 2
+    ]
+
+    graphs = rgraphs(graph_names)
+
+    noises = [
+        0.00,
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        # 0.05,
+
+    ]
+
+@ex.named_config
 def tuned():
     _CONE_args["dim"] = 512
     _LREA_args["iters"] = 40
