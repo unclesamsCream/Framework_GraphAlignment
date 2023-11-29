@@ -1798,6 +1798,7 @@ def test_GrampaL():
 @ex.named_config
 def test_ALHPA_S():
     run = [
+        # 13,
         65,
     ]
     iters = 5

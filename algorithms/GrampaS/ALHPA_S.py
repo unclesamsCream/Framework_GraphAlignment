@@ -7,11 +7,12 @@ import networkx as nx
 import warnings
 import itertools
 from sklearn.manifold import spectral_embedding as sk_specemb
-from lapjv import lapjv
+import lapjv
 from sklearn.cluster import k_means, KMeans
 from sklearn.exceptions import ConvergenceWarning
 import time
 import traceback
+from pprint import pprint
 
 def split_graph(graph, clustering):
     '''Split a graph into disjunct clusters and construct weighted graph where a node represents a cluster.
@@ -156,7 +157,7 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         # tar_embedding = (B @ tar_embedding.T).T
 
         sub_sim = match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
-
+        print(f'sub_sim:\n{sub_sim}')
         warnings.simplefilter('error', category=ConvergenceWarning)
         try:
             print('computing k-means')
@@ -171,119 +172,67 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
             print(f'Troublesome graph!!!\n Matching parent graph using GRAMPA')
             # match_grampa((src_adj, src_nodes), (tar_adj, tar_nodes))
             return
-        print('k-means')
-        print(f'k-means centroids:\n{src_centroids}')
-        print(f'k-means labels:\n{_src_cluster}')
-        # src_cluster = dict(zip(src_nodes, _src_cluster))
-        # tar_cluster = dict(zip(tar_nodes, _tar_cluster))
-        # src_nodes_by_cluster = [[k for k,v in src_cluster.items() if v == i] for i in range(K)]
-        # src_cluster_sizes = [len(x) for x in src_nodes_by_cluster]
-        # tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
-        # tar_cluster_sizes = [len(x) for x in tar_nodes_by_cluster]
-        # print(f'\ncluster numbers (2-emb): src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
+        # print('k-means')
+        # print(f'k-means centroids:\n{src_centroids}')
+        # print(f'k-means labels:\n{_src_cluster}')
+        src_cluster = dict(zip(src_nodes, _src_cluster))
+        src_nodes_by_cluster = [[k for k,v in src_cluster.items() if v == i] for i in range(K)]
+        # print(f'\ncluster\n{src_cluster}')
+        # print(f'\ncluster nodes\n{src_nodes_by_cluster}')
+        # print(f'\ncluster numbers (2-emb): src:{[len(x) for x in src_nodes_by_cluster]}\n')
 
-        # # 2. split graphs (src, tar) according to cluster.
-        # # print('Splitting SRC')
-        # src_subgraphs = split_graph(src_e, src_cluster)
-        # # print('Splitting TAR')
-        # tar_subgraphs = split_graph(tar_e, tar_cluster)
+        sub_matrices = []
 
-        # C_UPDATED = False
-        # # row, col, _ = lapjv(-sim) # row, col, _ = lapjv(-sim)
-        # partition_alignment = list(zip(range(K), range(K)))
-        # cur_part_acc = []
-        # part_size_diff = {}
+        for cluster in src_nodes_by_cluster:
+            indices = np.array(cluster) - 1
+            sub_matrix = sub_sim[np.ix_(indices, indices)]
+            sub_matrices.append(sub_matrix)
 
-        # for (c_s, c_t) in partition_alignment:
-        #     # print(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
-        #     part_size_diff[(c_s, c_t)] = len(src_nodes_by_cluster[c_s]) - len(tar_nodes_by_cluster[c_t])
-        #     s_trans_nodes = [np.argwhere(gt[0] == node)[0][0] for node in tar_nodes_by_cluster[c_t]]
-        #     acc_count = np.array([node in src_nodes_by_cluster[c_s] for node in s_trans_nodes], dtype=int)
-        #     #print(f'\nCLUSTER ACC (proportion of nodes in target cluster also present in src cluster)\n\n{acc_count.sum()}/{len(acc_count)}={acc_count.mean()}')
-        #     cur_part_acc.append(acc_count.sum())
-        # cur_part_acc = np.array(cur_part_acc)
+        # print(f'sub_matrices:\n{sub_matrices}')
 
-        # # for each positive entry in part_size_diff borrow from negative entries
-        # # for (pp, size) in part_size_diff.items():
-        # for i, (pp, size) in enumerate(part_size_diff.items()):
-        #     if size > 0:
-        #         # find candidate clusters from which to borrow nodes
-        #         candidate_clusters = [k for (k, v) in part_size_diff.items() if v < 0]
-        #         # list of indices of tar_nodes that correspond to candidate cluster c_i for all c_i candidate (target) clusters.
-        #         cand_idcs_list = [[i for i, v in enumerate(_tar_cluster) if v == j[1]] for j in candidate_clusters]
-        #         # distance to current
-        #         dists = [tar_dists[idcs_list][:, pp[1]] for idcs_list in cand_idcs_list]
+        def jv(dist):
 
-        #         while size > 0:
-        #             best_dist = np.inf
-        #             best_idx = (0, 0)
-        #             best_c = (None, None)
-
-        #             for i, k in enumerate(candidate_clusters):
-        #                 dist = dists[i]
-        #                 min_idx = np.argmin(dist)
-        #                 d = dist[min_idx]
-        #                 if d < best_dist and part_size_diff[k] < 0:
-        #                     best_dist = d
-        #                     best_idx = (i, min_idx)
-        #                     best_c = k
-
-        #             # Update loop variables
-        #             size -= 1
-        #             if best_c != (None, None):
-        #                 dists[best_idx[0]][best_idx[1]] = np.inf
-        #                 part_size_diff[best_c] += 1
-
-        #                 # Adjust clustering
-        #                 _tar_cluster[cand_idcs_list[best_idx[0]][best_idx[1]]] = pp[1]
-        #                 C_UPDATED = True
-
-        # print(f'\nPartition Alignment: {partition_alignment}\n')
-        # # Only recompute cluster if cluster was changed
-        # if C_UPDATED:
-        #     tar_cluster = dict(zip(tar_nodes, _tar_cluster))
-        #     tar_nodes_by_cluster = [[k for k,v in tar_cluster.items() if v == i] for i in range(K)]
-        #     tar_cluster_sizes = [len(x) for x in tar_nodes_by_cluster]
-        #     tar_subgraphs = split_graph(tar_e, tar_cluster)
-        #     new_part_acc = []
-        #     for (c_s, c_t) in partition_alignment:
-        #         # print(f'c_s_size: {c_s_size}, c_t_size: {c_t_size}')
-        #         part_size_diff[(c_s, c_t)] = len(src_nodes_by_cluster[c_s]) - len(tar_nodes_by_cluster[c_t])
-        #         s_trans_nodes = [np.argwhere(gt[0] == node)[0][0] for node in tar_nodes_by_cluster[c_t]]
-        #         acc_count = np.array([node in src_nodes_by_cluster[c_s] for node in s_trans_nodes], dtype=int)
-        #         #print(f'\nCLUSTER ACC --- AFTER UPDATE\n\n{acc_count.sum()}/{len(acc_count)}={acc_count.mean()}')
-        #         new_part_acc.append(acc_count.sum())
+            # print('hungarian_matching: calculating distance matrix')
 
 
-        #     new_part_acc = np.array(new_part_acc)
-        #     cacc_pre = sum(cur_part_acc) / sum(src_cluster_sizes)
-        #     cacc_post = sum(new_part_acc) / sum(src_cluster_sizes)
 
-        #     print(f'\ncluster numbers after: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
-        #     print(f'\n cluster acc before: {cur_part_acc}: {cacc_pre}, after: {new_part_acc}: {cacc_post}')
-            
-        #     print(part_size_diff)
-        #     readjustment_accs.append((new_part_acc-cur_part_acc).sum())
-        #     clustering_accs_pre.append(cacc_pre)
-        #     clustering_accs_post.append(cacc_post)
+            # dist = sci.spatial.distance_matrix(G1_emb.T, G2_emb.T)
 
-        #     print(f'\ncluster numbers after: src:{src_cluster_sizes}, tar:{tar_cluster_sizes}\n')
-        #     print(f'\n cluster acc before: {cur_part_acc}, after: {new_part_acc}')
-        #     print(part_size_diff)
-        #     readjustment_accs.append((new_part_acc-cur_part_acc).sum())
-        # # 4. recurse or match
-        # for i, (c_s, c_t) in enumerate(partition_alignment):
-        #     #print(f'Iterating partition alignments -- Current pair = {(c_s, c_t)}')
-        #     sub_src = src_subgraphs[c_s]
-        #     sub_tar = tar_subgraphs[c_t]
-        #     c_s_nodes = np.unique(sub_src)
-        #     c_t_nodes = np.unique(sub_tar)
-        #     len_cs = len(c_s_nodes)
-        #     len_ct = len(c_t_nodes)
+            n = dist.shape[0]
 
-        #     if len_cs == 0 or len_ct == 0:
-        #         print(f'c_s_nodes or c_t_nodes empty: {c_s_nodes}, {c_t_nodes} -- CONTINUING LOOP (Discard matching)')
-        #         continue
+            # print(np.shape(dist))
+
+            # print('hungarian_matching: calculating matching')
+
+            cols, rows, _ = lapjv.lapjv(dist)
+
+            # print(cols)
+
+            # print(rows)
+
+            matching = np.c_[rows, np.linspace(0, n-1, n).astype(int)]
+
+            # print(matching)
+
+            matching = matching[matching[:, 0].argsort()]
+
+            # print(matching)
+
+            return matching.astype(int).T
+
+        results = []
+        for sub_matrix in sub_matrices:
+            # print(f'sub_matrix:\n{sub_matrix}')
+            result = jv(sub_matrix)
+            # print(f'result:\n{result}')
+            # print(f'result shape:\n{result.shape}')
+            results.append(result)
+        print(f'results:\n{results}')
+        final_result = np.concatenate(results, axis=1)
+        # print(f'final_result shape:\n{final_result.shape}')
+        # print("final_result")
+        # pprint(final_result)
+        return final_result
 
         #     # if cluster size is smaller than sqrt(|V|) then align nodes.
         #     #  else cluster recurse.
@@ -295,12 +244,12 @@ def alhpa(src_graph, tar_graph, rsc=0, n_comp=10, gt=None):
         #         pos.append((c_s, c_t))
         #         cluster_recurse(sub_src, sub_tar, pos=pos)
 
-    cluster_recurse(src_graph, tar_graph)
+    matching = cluster_recurse(src_graph, tar_graph)
     if len(all_pos) == 0:
         pos_res = {'max_depth': 0, 'avg_depth': 0}
     else:
         pos_res = {'max_depth': len(max(all_pos, key=lambda x: len(x))), 'avg_depth': np.array([len(x) for x in all_pos]).mean()}# , pos': all_pos
-    matching = np.c_[np.linspace(0, n-1, n).astype(int), matching].astype(int).T
+    # matching = np.c_[np.linspace(0, n-1, n).astype(int), matching].astype(int).T
 
     return matching, pos_res, np.array(readjustment_accs), np.array(clustering_accs_pre), np.array(clustering_accs_post)
 
@@ -313,10 +262,10 @@ def main(data, rsc, n_comp):
     n = Src.shape[0]
     s = time.time()
     matching, pos, readj_accs, cacc_pre, cacc_post = alhpa(Src, Tar, rsc, n_comp, gt)
-    print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
-    print(f'average cluster acc.: (pre,post): {cacc_pre.mean()},{cacc_post.mean()}')
+    # print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
+    # print(f'average cluster acc.: (pre,post): {cacc_pre.mean()},{cacc_post.mean()}')
 
-
-    for k, v in pos.items():
-        print(f'{k}:\n{v}')
+    print(f'ALHPA_S: {matching}')
+    # for k, v in pos.items():
+    #     print(f'{k}:\n{v}')
     return matching

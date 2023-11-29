@@ -323,6 +323,7 @@ def main(data, rsc, n_comp):
     n = Src.shape[0]
     s = time.time()
     matching, pos, readj_accs, cacc_pre, cacc_post = alhpa(Src, Tar, rsc, n_comp, gt)
+    print(f'ALHPA matching:\n{matching}')
     print(f'readjustment accuracis: {readj_accs.mean()} (avg.)\n{readj_accs}')
     print(f'average cluster acc.: (pre,post): {cacc_pre.mean()},{cacc_post.mean()}')
 
